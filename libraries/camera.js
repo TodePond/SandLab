@@ -12,7 +12,7 @@ const View = class {
 
 	// world position -> view position
 	cast(position) {
-		const [x, y] = subtract(position, this.position)
+		const [x, y] = add(position, this.position)
 		const [width, height] = this.dimensions
 		return [x / width, y / height]
 	}
@@ -21,7 +21,7 @@ const View = class {
 	get(position) {
 		const [x, y] = position
 		const [width, height] = this.dimensions
-		return add(this.position, [x * width, y * height])
+		return subtract([x * width, y * height], this.position)
 	}
 
 	// World position at center of view
@@ -92,16 +92,3 @@ const Camera = class extends View {
 		window.addEventListener("wheel", (e) => this.onWheel(e), { passive: false })
 	}
 }
-
-/*
-const view = new View({
-	dimensions: [3.0, 2.0],
-})
-
-view.cast([0.0, 0.0]).d //[0.0, 0.0]
-view.cast([1.0, 1.0]).d //[0.5, 0.5]
-view.cast([2.0, 2.0]).d //[1.0, 1.0]
-
-view.getCenter().d
-view.getBounds().d
-*/

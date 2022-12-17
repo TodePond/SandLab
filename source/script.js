@@ -6,7 +6,8 @@ const Cell = class {
 		Object.assign(this, {
 			position: [0.0, 0.0],
 			dimensions: [1.0, 1.0],
-			colour: GREY,
+			splash: BLACK.number,
+			colour: BLACK,
 			...options,
 		})
 	}
@@ -101,6 +102,31 @@ class World {
 		this.add(mergedCell)
 		return mergedCell
 	}
+
+	recolour(cell, colour) {
+		this.delete(cell)
+
+		const recolouredCell = new Cell({
+			position: cell.position,
+			dimensions: cell.dimensions,
+			splash: colour.splash,
+			colour,
+		})
+		this.add(recolouredCell)
+		return recolouredCell
+	}
+
+	pick(position) {
+		const [x, y] = position
+		for (const cell of this.cells) {
+			const [left, top] = cell.position
+			const [right, bottom] = [left + cell.dimensions[0], top + cell.dimensions[1]]
+
+			if (x >= left && x <= right && y >= top && y <= bottom) {
+				return cell
+			}
+		}
+	}
 }
 
 //===============//
@@ -157,6 +183,20 @@ const merge = (cells, colour) => {
 	})
 }
 
+//========//
+// COLOUR //
+//========//
+const getSplashDigits = (splash) => {
+	const chars = splash.toString().padStart(3, "0").split("")
+	const digits = chars.map((v) => parseInt(v))
+	return digits
+}
+
+const mutateSplash = (splash) => {
+	const digits = getSplashDigits(splash).map((v, i) => clamp(v + (random() % (i === 0 ? 4 : 3)) - 1, 0, 9))
+	return parseInt(digits.join(""))
+}
+
 //------ NO GLOBALS ABOVE THIS LINE ------//
 
 //========//
@@ -183,48 +223,67 @@ stage.resize = (context) => {
 	const { canvas } = context
 
 	// Resize camera
-	camera.resize([canvas.width, canvas.height])
+	const size = Math.min(canvas.width, canvas.height)
+	camera.resize([size, size])
 
 	// Resize image
-	const size = Math.min(canvas.width, canvas.height)
 	const image = context.createImageData(size, size)
 	setImageAlpha(image, 255)
 	global.image = image
 
 	// Redraw world
 	world.draw(image)
-	context.putImageData(image, 0, 0)
+	const [x, y] = camera.get([0, 0])
+	context.putImageData(image, x, y)
 }
 
 stage.tick = (context) => {
-	const { image } = global
-	context.putImageData(image, 0, 0)
+	const { canvas } = context
+	const { image, camera } = global
+	const [x, y] = camera.get([0, 0])
+	context.clearRect(0, 0, canvas.width, canvas.height)
+	context.putImageData(image, x, y)
 }
 
 stage.update = (context) => {
-	const { world, image } = global
+	const { world, image, camera } = global
 
 	// Update cells
 	const cells = [...world.cells]
 	for (const cell of cells) {
 		// RAINBOW SPLITTER!
+		/*
 		if (cell.dimensions[0] > 0.002 && cell.dimensions[1] > 0.002 && maybe(0.05)) {
 			const splitCells = world.split(cell, [2, 2])
 			for (const splitCell of splitCells) {
-				splitCell.colour = randomFrom(HUES)
+				const splash = mutateSplash(splitCell.colour.splash)
+				splitCell.colour = new Splash(splash)
+				splitCell.splash = splash
 				splitCell.draw(image)
 			}
 		}
 		continue
+		*/
 
 		if (cell.colour === BLACK) {
 		} else if (cell.colour === YELLOW) {
 		} else if (cell.colour === GREY) {
-			const splitCells = world.split(cell, [7, 7])
+			const splitCells = world.split(cell, [2, 2])
 			for (const splitCell of splitCells) {
 				splitCell.colour = BLACK
 				splitCell.draw(image)
 			}
+		}
+	}
+
+	// Place cells with the pointer
+	const pointer = getPointer()
+	if (pointer.down) {
+		const colour = GREY
+		const cell = world.pick(camera.cast(scale(pointer.position, devicePixelRatio)))
+		if (cell) {
+			const recolouredCell = world.recolour(cell, colour)
+			recolouredCell.draw(image)
 		}
 	}
 }

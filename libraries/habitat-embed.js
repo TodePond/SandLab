@@ -875,6 +875,7 @@ const HabitatFrogasaurus = {}
 				const green = GREEN_SPLASH_VALUES[tens]
 				const blue = BLUE_SPLASH_VALUES[ones]
 				super(red, green, blue)
+				this.splash = number
 			}
 		}
 
