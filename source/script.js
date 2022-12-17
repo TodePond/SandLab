@@ -24,9 +24,15 @@ const Cell = class {
 
 		// Set the image data of every pixel in the cell
 		// The border is 1 pixel thick and void coloured
+		const BORDER_WIDTH = Math.min(5, Math.floor(Math.min(width, height) / 10))
 		for (let y = top; y <= bottom; y++) {
 			for (let x = left; x <= right; x++) {
-				const isBorder = x === left || x === right || y === top || y === bottom
+				const isBorder =
+					x < left + BORDER_WIDTH ||
+					x > right - BORDER_WIDTH ||
+					y < top + BORDER_WIDTH ||
+					y > bottom - BORDER_WIDTH
+
 				const colour = isBorder ? VOID : this.colour
 
 				image.data[i + 0] = colour[0]
@@ -165,7 +171,7 @@ const global = {
 //===========//
 // GAME LOOP //
 //===========//
-const stage = new Stage({ speed: 0.1 })
+const stage = new Stage()
 
 stage.start = (context) => {
 	const { canvas } = context
@@ -201,15 +207,23 @@ stage.update = (context) => {
 	// Update cells
 	const cells = [...world.cells]
 	for (const cell of cells) {
+		// RAINBOW SPLITTER!
+		if (cell.dimensions[0] > 0.002 && cell.dimensions[1] > 0.002 && maybe(0.05)) {
+			const splitCells = world.split(cell, [2, 2])
+			for (const splitCell of splitCells) {
+				splitCell.colour = randomFrom(HUES)
+				splitCell.draw(image)
+			}
+		}
+		continue
+
 		if (cell.colour === BLACK) {
-			//} else if (cell.colour === YELLOW) {
-		} else if (true || cell.colour === GREY) {
-			if (cell.dimensions[0] > 0.01 && cell.dimensions[1] > 0.01 && maybe(0.1)) {
-				const splitCells = world.split(cell, [2, 2])
-				for (const splitCell of splitCells) {
-					splitCell.colour = randomFrom(HUES)
-					splitCell.draw(image)
-				}
+		} else if (cell.colour === YELLOW) {
+		} else if (cell.colour === GREY) {
+			const splitCells = world.split(cell, [7, 7])
+			for (const splitCell of splitCells) {
+				splitCell.colour = BLACK
+				splitCell.draw(image)
 			}
 		}
 	}
