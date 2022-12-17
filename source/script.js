@@ -11,20 +11,46 @@ const Cell = class {
 		})
 	}
 
-	set(image, camera, properties = {}) {
-		Object.assign(this, properties)
-		this.draw(image, camera)
-	}
+	draw(image) {
+		const [x, y] = [this.position.x * image.width, this.position.y * image.height].map(Math.floor)
+		const [width, height] = [this.dimensions[0] * image.width, this.dimensions[1] * image.height].map(Math.floor)
 
-	draw(image, camera) {
-		const [x, y] = camera.get(this.position).map(Math.floor)
-		const [width, height] = camera.get(this.dimensions).map(Math.ceil)
+		const left = x
+		const right = x + width
+		const top = y
+		const bottom = y + height
 
-		for (let i = x; i < x + width; i++) {
-			for (let j = y; j < y + height; j++) {
-				setPixel(image, i, j, this.colour)
+		let i = getPixelIndex(image, left, top)
+
+		// Set the image data of every pixel in the cell
+		// The border is 1 pixel thick and void coloured
+		for (let y = top; y <= bottom; y++) {
+			for (let x = left; x <= right; x++) {
+				const isBorder = x === left || x === right || y === top || y === bottom
+				const colour = isBorder ? VOID : this.colour
+
+				image.data[i + 0] = colour[0]
+				image.data[i + 1] = colour[1]
+				image.data[i + 2] = colour[2]
+
+				i += 4
 			}
+			i += (image.width - width - 1) * 4
 		}
+	}
+}
+
+//=======//
+// IMAGE //
+//=======//
+const getPixelIndex = (image, x, y) => {
+	return (x + y * image.width) * 4
+}
+
+// Function that sets the alpha channel of every pixel
+const setImageAlpha = (image, alpha) => {
+	for (let i = 3; i < image.data.length; i += 4) {
+		image.data[i] = alpha
 	}
 }
 
@@ -45,10 +71,29 @@ class World {
 		this.cells.delete(cell)
 	}
 
-	draw(imageData, camera) {
+	draw(image) {
 		for (const cell of this.cells) {
-			cell.draw(imageData, camera)
+			cell.draw(image)
 		}
+	}
+
+	split(cell, [rows, columns]) {
+		this.delete(cell)
+		const splitCells = split(cell, [rows, columns])
+		for (const splitCell of splitCells) {
+			this.add(splitCell)
+		}
+		return splitCells
+	}
+
+	merge(cells, colour) {
+		for (const cell of cells) {
+			this.delete(cell)
+		}
+
+		const mergedCell = merge(cells, colour)
+		this.add(mergedCell)
+		return mergedCell
 	}
 }
 
@@ -106,28 +151,6 @@ const merge = (cells, colour) => {
 	})
 }
 
-//=======//
-// IMAGE //
-//=======//
-const setPixel = (image, x, y, colour) => {
-	const index = (x + y * image.width) * 4
-
-	for (let i = 0; i < 3; i++) {
-		image.data[index + i] = colour[i]
-	}
-}
-
-const getPixelIndex = (image, x, y) => {
-	return (x + y * image.width) * 4
-}
-
-// Function that sets the alpha channel of every pixel
-const setImageAlpha = (image, alpha) => {
-	for (let i = 3; i < image.data.length; i += 4) {
-		image.data[i] = alpha
-	}
-}
-
 //------ NO GLOBALS ABOVE THIS LINE ------//
 
 //========//
@@ -157,12 +180,13 @@ stage.resize = (context) => {
 	camera.resize([canvas.width, canvas.height])
 
 	// Resize image
-	const image = context.createImageData(canvas.width, canvas.height)
+	const size = Math.min(canvas.width, canvas.height)
+	const image = context.createImageData(size, size)
 	setImageAlpha(image, 255)
 	global.image = image
 
 	// Redraw world
-	world.draw(image, camera)
+	world.draw(image)
 	context.putImageData(image, 0, 0)
 }
 
@@ -172,19 +196,20 @@ stage.tick = (context) => {
 }
 
 stage.update = (context) => {
-	const { world, camera, image } = global
+	const { world, image } = global
 
 	// Update cells
 	const cells = [...world.cells]
 	for (const cell of cells) {
 		if (cell.colour === BLACK) {
-		} else if (cell.colour === YELLOW) {
-		} else if (cell.colour === GREY) {
-			const splitCells = split(cell, [8, 8])
-			world.delete(cell)
-			for (const splitCell of splitCells) {
-				splitCell.set(image, camera, { colour: BLACK })
-				world.add(splitCell)
+			//} else if (cell.colour === YELLOW) {
+		} else if (true || cell.colour === GREY) {
+			if (cell.dimensions[0] > 0.01 && cell.dimensions[1] > 0.01 && maybe(0.1)) {
+				const splitCells = world.split(cell, [2, 2])
+				for (const splitCell of splitCells) {
+					splitCell.colour = randomFrom(HUES)
+					splitCell.draw(image)
+				}
 			}
 		}
 	}
