@@ -665,7 +665,7 @@ const HabitatFrogasaurus = {}
 			if (stage.context === undefined) {
 				const canvas = document.createElement("canvas")
 				canvas.style["background-color"] = "#171d28"
-				canvas.style["image-rendering"] = "pixelated"
+				//canvas.style["image-rendering"] = "pixelated"
 				document.body.style["background-color"] = "#06070a"
 				document.body.style["margin"] = "0px"
 				document.body.style["overflow"] = "hidden"
@@ -699,10 +699,10 @@ const HabitatFrogasaurus = {}
 			const scaledHeight = height * stage.scale
 
 			const { canvas } = stage.context
-			canvas.width = Math.round(scaledWidth)
-			canvas.height = Math.round(scaledHeight)
-			canvas.style["width"] = canvas.width
-			canvas.style["height"] = canvas.height
+			canvas.width = Math.round(scaledWidth * devicePixelRatio)
+			canvas.height = Math.round(scaledHeight * devicePixelRatio)
+			canvas.style["width"] = Math.round(scaledWidth)
+			canvas.style["height"] = Math.round(scaledHeight)
 
 			const marginHorizontal = (innerWidth - scaledWidth) / 2
 			const marginVertical = (innerHeight - scaledHeight) / 2
