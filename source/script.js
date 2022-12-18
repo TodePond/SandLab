@@ -3,46 +3,78 @@
 //======//
 const Cell = class {
 	constructor(options = {}) {
+		// Properties
 		Object.assign(this, {
-			position: [0.0, 0.0],
-			dimensions: [1.0, 1.0],
-			splash: BLACK.number,
+			bounds: {
+				left: 0.0,
+				right: 1.0,
+				top: 0.0,
+				bottom: 1.0,
+			},
 			colour: BLACK,
 			...options,
 		})
+
+		// Caches
+		this.splash = this.colour.splash
+
+		const x = this.bounds.left
+		const y = this.bounds.top
+		this.position = [x, y]
+
+		const width = this.bounds.right - this.bounds.left
+		const height = this.bounds.bottom - this.bounds.top
+		this.dimensions = [width, height]
+	}
+
+	clear(image) {
+		const { colour } = this
+		this.colour = VOID
+		this.draw(image)
+		this.colour = colour
 	}
 
 	draw(image) {
-		const [x, y] = [this.position.x * image.width, this.position.y * image.height].map(Math.floor)
-		const [width, height] = [this.dimensions[0] * image.width, this.dimensions[1] * image.height].map(Math.floor)
+		const [x, y] = [this.position.x * image.width, this.position.y * image.height]
+		const [width, height] = [this.dimensions[0] * image.width, this.dimensions[1] * image.height]
 
-		const left = x
-		const right = x + width
-		const top = y
-		const bottom = y + height
+		const left = Math.floor(x)
+		const right = Math.floor(x + width)
+		const top = Math.floor(y)
+		const bottom = Math.floor(y + height)
+
+		const drawnWidth = right - left
+		const drawnHeight = bottom - top
 
 		let i = getPixelIndex(image, left, top)
 
 		// Set the image data of every pixel in the cell
 		// The border is 1 pixel thick and void coloured
-		const BORDER_WIDTH = Math.min(5, Math.floor(Math.min(width, height) / 10))
+		let BORDER_WIDTH = Math.min(4, Math.min(drawnWidth, drawnHeight) / 10)
+		if (BORDER_WIDTH < 1) {
+			if (BORDER_WIDTH > 0.4) {
+				BORDER_WIDTH = 1
+			} else {
+				BORDER_WIDTH = 0
+			}
+		}
 		for (let y = top; y <= bottom; y++) {
 			for (let x = left; x <= right; x++) {
 				const isBorder =
-					x < left + BORDER_WIDTH ||
-					x > right - BORDER_WIDTH ||
-					y < top + BORDER_WIDTH ||
-					y > bottom - BORDER_WIDTH
+					BORDER_WIDTH > 0 &&
+					(x < left + BORDER_WIDTH ||
+						x > right - BORDER_WIDTH ||
+						y < top + BORDER_WIDTH ||
+						y > bottom - BORDER_WIDTH)
 
 				const colour = isBorder ? VOID : this.colour
 
 				image.data[i + 0] = colour[0]
 				image.data[i + 1] = colour[1]
 				image.data[i + 2] = colour[2]
-
 				i += 4
 			}
-			i += (image.width - width - 1) * 4
+			i += (image.width - drawnWidth - 1) * 4
 		}
 	}
 }
@@ -66,16 +98,54 @@ const setImageAlpha = (image, alpha) => {
 //=======//
 class World {
 	constructor() {
+		// Properties
 		this.cells = new Set()
+
+		// Caches
+		this.caches = {
+			left: new Map(),
+			right: new Map(),
+			top: new Map(),
+			bottom: new Map(),
+		}
+
+		// Setup
 		this.add(new Cell())
 	}
 
 	add(cell) {
 		this.cells.add(cell)
+		this.cache(cell)
 	}
 
 	delete(cell) {
 		this.cells.delete(cell)
+		this.uncache(cell)
+	}
+
+	cache(cell) {
+		for (const key in DIRECTIONS) {
+			const cache = this.caches[key]
+			const address = cell.bounds[key]
+			let set = cache.get(address)
+			if (set === undefined) {
+				set = new Set()
+				cache.set(address, set)
+			}
+			set.add(cell)
+		}
+	}
+
+	uncache(cell) {
+		for (const key in DIRECTIONS) {
+			const cache = this.caches[key]
+			const address = cell.bounds[key]
+			const set = cache.get(address)
+			set.delete(cell)
+			if (set.size === 0) {
+				cache.delete(address)
+			}
+		}
 	}
 
 	draw(image) {
@@ -104,16 +174,8 @@ class World {
 	}
 
 	recolour(cell, colour) {
-		this.delete(cell)
-
-		const recolouredCell = new Cell({
-			position: cell.position,
-			dimensions: cell.dimensions,
-			splash: colour.splash,
-			colour,
-		})
-		this.add(recolouredCell)
-		return recolouredCell
+		cell.colour = colour
+		return cell
 	}
 
 	pick(position) {
@@ -133,15 +195,23 @@ class World {
 // SPLIT / MERGE //
 //===============//
 const split = (cell, [rows, columns]) => {
-	const [x, y] = cell.position
+	const { left, right, top, bottom } = cell.bounds
 	const [width, height] = cell.dimensions
+
+	const splitWidth = width / columns
+	const splitHeight = height / rows
 
 	const cells = []
 	for (let i = 0; i < rows; i++) {
 		for (let j = 0; j < columns; j++) {
+			const bounds = {
+				left: left + j * splitWidth,
+				top: top + i * splitHeight,
+				right: right - (columns - j - 1) * splitWidth,
+				bottom: bottom - (rows - i - 1) * splitHeight,
+			}
 			const splitCell = new Cell({
-				position: [x + (i * width) / rows, y + (j * height) / columns],
-				dimensions: [width / rows, height / columns],
+				bounds,
 				colour: cell.colour,
 			})
 
@@ -160,26 +230,28 @@ const merge = (cells, colour) => {
 		throw new Error("Cannot merge 0 cells")
 	}
 
-	// Get the minimum and maximum x and y values
-	let minX = Infinity
-	let minY = Infinity
-	let maxX = -Infinity
-	let maxY = -Infinity
+	let left = Infinity
+	let top = Infinity
+	let right = -Infinity
+	let bottom = -Infinity
 
 	for (const cell of cells) {
-		const [x, y] = cell.position
-		const [width, height] = cell.dimensions
+		const { bounds } = cell
 
-		minX = Math.min(minX, x)
-		minY = Math.min(minY, y)
-		maxX = Math.max(maxX, x + width)
-		maxY = Math.max(maxY, y + height)
+		left = Math.min(minX, bounds.left)
+		top = Math.min(minY, bounds.top)
+		right = Math.max(maxX, bounds.right)
+		bottom = Math.max(maxY, bounds.bottom)
 	}
 
 	return new Cell({
-		position: [minX, minY],
-		dimensions: [maxX - minX, maxY - minY],
 		colour,
+		bounds: {
+			left,
+			top,
+			right,
+			bottom,
+		},
 	})
 }
 
@@ -193,8 +265,34 @@ const getSplashDigits = (splash) => {
 }
 
 const mutateSplash = (splash) => {
-	const digits = getSplashDigits(splash).map((v, i) => clamp(v + (random() % (i === 0 ? 4 : 3)) - 1, 0, 9))
+	const digits = getSplashDigits(splash).map((v, i) => clamp(v + (random() % (i === 0 ? 3 : 3)) - 1, 0, 9))
 	return parseInt(digits.join(""))
+}
+
+//===========//
+// DIRECTION //
+//===========//
+const DIRECTIONS = {
+	left: {
+		opposite: "right",
+		min: "top",
+		max: "bottom",
+	},
+	right: {
+		opposite: "left",
+		min: "top",
+		max: "bottom",
+	},
+	top: {
+		opposite: "bottom",
+		min: "left",
+		max: "right",
+	},
+	bottom: {
+		opposite: "top",
+		min: "left",
+		max: "right",
+	},
 }
 
 //------ NO GLOBALS ABOVE THIS LINE ------//
@@ -206,6 +304,9 @@ const global = {
 	world: new World(),
 	camera: new View(),
 	image: undefined,
+	brush: {
+		colour: YELLOW,
+	},
 }
 
 //===========//
@@ -249,8 +350,7 @@ stage.update = (context) => {
 	const { world, image, camera } = global
 
 	// Update cells
-	const cells = [...world.cells]
-	for (const cell of cells) {
+	for (const cell of world.cells) {
 		// RAINBOW SPLITTER!
 		/*
 		if (cell.dimensions[0] > 0.002 && cell.dimensions[1] > 0.002 && maybe(0.05)) {
@@ -265,25 +365,26 @@ stage.update = (context) => {
 		continue
 		*/
 
-		if (cell.colour === BLACK) {
-		} else if (cell.colour === YELLOW) {
-		} else if (cell.colour === GREY) {
-			const splitCells = world.split(cell, [2, 2])
-			for (const splitCell of splitCells) {
-				splitCell.colour = BLACK
-				splitCell.draw(image)
-			}
+		const element = ELEMENTS.get(cell.colour.splash)
+
+		if (element === undefined) {
+			continue
+		}
+
+		if (element.update !== undefined) {
+			element.update(cell, world, image)
 		}
 	}
 
 	// Place cells with the pointer
 	const pointer = getPointer()
 	if (pointer.down) {
-		const colour = GREY
+		const colour = global.brush.colour
 		const cell = world.pick(camera.cast(scale(pointer.position, devicePixelRatio)))
 		if (cell) {
-			const recolouredCell = world.recolour(cell, colour)
-			recolouredCell.draw(image)
+			world.recolour(cell, colour)
+			cell.clear(image)
+			cell.draw(image)
 		}
 	}
 }
