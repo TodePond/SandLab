@@ -232,7 +232,6 @@ const tryToSleep = (cell, world) => {
 		splitCandidates.push(candidate)
 	}
 
-	if (maybe(0.9)) return []
 	for (const candidate of splitCandidates) {
 		// Where should we split the candidate?
 		// We might need to chop in two places, or just one
@@ -254,6 +253,20 @@ const tryToSleep = (cell, world) => {
 
 		// Return all the cells we created
 		const createdCells = [mergedCell, ...splitCells.filter((c, i) => i !== mergeIndex)]
+
+		const newAreas = createdCells.map((c) => c.dimensions[0] * c.dimensions[1])
+		const oldAreas = [cell, candidate].map((c) => c.dimensions[0] * c.dimensions[1])
+
+		const newScore = Math.max(...newAreas)
+		const oldScore = Math.max(...oldAreas)
+
+		if (newScore <= oldScore && maybe(1.0)) {
+			return []
+		}
+
+		if (maybe(0.0)) {
+			return []
+		}
 
 		return world.replace([cell, candidate], createdCells)
 	}
