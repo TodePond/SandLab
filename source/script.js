@@ -202,6 +202,30 @@ class World {
 		return recolouredCell
 	}
 
+	reposition(cell, bounds) {
+		this.delete(cell)
+		const newBounds = {
+			...cell.bounds,
+			...bounds,
+		}
+		const movedCell = new Cell({
+			bounds: newBounds,
+			colour: cell.colour,
+		})
+		this.add(movedCell)
+		return movedCell
+	}
+
+	replace(cells, newCells) {
+		for (const cell of cells) {
+			this.delete(cell)
+		}
+		for (const newCell of newCells) {
+			this.add(newCell)
+		}
+		return newCells
+	}
+
 	pick(position) {
 		const [x, y] = position
 		for (const cell of this.cells) {

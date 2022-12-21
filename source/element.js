@@ -185,8 +185,19 @@ ELEMENTS.set(YELLOW.splash, {
 		// (but only if it has the same width as us)
 		if (belowContacts.length === 1 && belowContacts[0].colour === BLACK) {
 			const below = belowContacts[0]
+			const newContactPoint = cell.bounds.top + below.dimensions[1]
 			if (below.dimensions[0] === cell.dimensions[0]) {
-				//TODO: move the cells around
+				const newSandCell = world.reposition(cell, {
+					top: newContactPoint,
+					bottom: below.bounds.bottom,
+				})
+
+				const newAirCell = world.reposition(below, {
+					top: cell.bounds.top,
+					bottom: newContactPoint,
+				})
+
+				return [newSandCell, newAirCell]
 			}
 		}
 
