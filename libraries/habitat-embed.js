@@ -698,6 +698,9 @@ const HabitatFrogasaurus = {}
 			const scaledWidth = width * stage.scale
 			const scaledHeight = height * stage.scale
 
+			/*
+			 */
+
 			const { canvas } = stage.context
 			canvas.width = Math.round(scaledWidth * devicePixelRatio)
 			canvas.height = Math.round(scaledHeight * devicePixelRatio)

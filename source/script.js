@@ -1,3 +1,10 @@
+//========//
+// SHARED //
+//========//
+const shared = {
+	clock: 0,
+}
+
 //======//
 // CELL //
 //======//
@@ -14,6 +21,9 @@ const Cell = class {
 			colour: BLACK,
 			...options,
 		})
+
+		// Internal
+		this.birth = shared.clock
 
 		// Caches
 		this.splash = this.colour.splash
@@ -124,7 +134,7 @@ class World {
 	}
 
 	cache(cell) {
-		for (const key in DIRECTIONS) {
+		for (const key in DIRECTION) {
 			const cache = this.caches[key]
 			const address = cell.bounds[key]
 			let set = cache.get(address)
@@ -137,7 +147,7 @@ class World {
 	}
 
 	uncache(cell) {
-		for (const key in DIRECTIONS) {
+		for (const key in DIRECTION) {
 			const cache = this.caches[key]
 			const address = cell.bounds[key]
 			const set = cache.get(address)
@@ -154,6 +164,15 @@ class World {
 		}
 	}
 
+	chop(cell, axis, targets) {
+		this.delete(cell)
+		const choppedCells = chop(cell, axis, targets)
+		for (const choppedCell of choppedCells) {
+			this.add(choppedCell)
+		}
+		return choppedCells
+	}
+
 	split(cell, [rows, columns]) {
 		this.delete(cell)
 		const splitCells = split(cell, [rows, columns])
@@ -163,7 +182,7 @@ class World {
 		return splitCells
 	}
 
-	merge(cells, colour) {
+	merge(cells, colour = cells[0].colour) {
 		for (const cell of cells) {
 			this.delete(cell)
 		}
@@ -174,8 +193,13 @@ class World {
 	}
 
 	recolour(cell, colour) {
-		cell.colour = colour
-		return cell
+		this.delete(cell)
+		const recolouredCell = new Cell({
+			bounds: cell.bounds,
+			colour,
+		})
+		this.add(recolouredCell)
+		return recolouredCell
 	}
 
 	pick(position) {
@@ -202,16 +226,15 @@ const split = (cell, [rows, columns]) => {
 	const splitHeight = height / rows
 
 	const cells = []
-	for (let i = 0; i < rows; i++) {
-		for (let j = 0; j < columns; j++) {
-			const bounds = {
-				left: left + j * splitWidth,
-				top: top + i * splitHeight,
-				right: right - (columns - j - 1) * splitWidth,
-				bottom: bottom - (rows - i - 1) * splitHeight,
-			}
+	for (let i = rows - 1; i >= 0; i--) {
+		for (let j = columns - 1; j >= 0; j--) {
 			const splitCell = new Cell({
-				bounds,
+				bounds: {
+					left: left + j * splitWidth,
+					top: top + i * splitHeight,
+					right: right - (columns - j - 1) * splitWidth,
+					bottom: bottom - (rows - i - 1) * splitHeight,
+				},
 				colour: cell.colour,
 			})
 
@@ -222,10 +245,43 @@ const split = (cell, [rows, columns]) => {
 	return cells
 }
 
+// Chop a cell into smaller cells along an axis
+// The targets are the positions along the axis where the cells should be chopped
+const chop = (cell, axis, targets) => {
+	if (targets.length === 0) {
+		return [cell]
+	}
+
+	const direction = AXIS[axis]
+
+	const cells = []
+	let currentTarget = cell.bounds[direction.min]
+	for (let i = 0; i <= targets.length; i++) {
+		const target = targets[i] || cell.bounds[direction.max]
+
+		const bounds = {
+			[direction.min]: currentTarget,
+			[direction.max]: target,
+			[direction.adjacent.min]: cell.bounds[direction.adjacent.min],
+			[direction.adjacent.max]: cell.bounds[direction.adjacent.max],
+		}
+
+		const choppedCell = new Cell({
+			bounds,
+			colour: cell.colour,
+		})
+
+		cells.push(choppedCell)
+		currentTarget = target
+	}
+
+	return cells
+}
+
 // From an array of cells, return a single cell that encompasses all of them
 // This assumes that the cells are all connected via touching
 // The cells can be in any order and can have different dimensions
-const merge = (cells, colour) => {
+const merge = (cells, colour = cells[0].colour) => {
 	if (cells.length === 0) {
 		throw new Error("Cannot merge 0 cells")
 	}
@@ -237,11 +293,10 @@ const merge = (cells, colour) => {
 
 	for (const cell of cells) {
 		const { bounds } = cell
-
-		left = Math.min(minX, bounds.left)
-		top = Math.min(minY, bounds.top)
-		right = Math.max(maxX, bounds.right)
-		bottom = Math.max(maxY, bounds.bottom)
+		left = Math.min(left, bounds.left)
+		top = Math.min(top, bounds.top)
+		right = Math.max(right, bounds.right)
+		bottom = Math.max(bottom, bounds.bottom)
 	}
 
 	return new Cell({
@@ -272,27 +327,46 @@ const mutateSplash = (splash) => {
 //===========//
 // DIRECTION //
 //===========//
-const DIRECTIONS = {
+const DIRECTION = {
 	left: {
-		opposite: "right",
+		name: "left",
 		min: "top",
 		max: "bottom",
+		axis: "x",
 	},
 	right: {
-		opposite: "left",
+		name: "right",
 		min: "top",
 		max: "bottom",
+		axis: "x",
 	},
 	top: {
-		opposite: "bottom",
+		name: "top",
 		min: "left",
 		max: "right",
+		axis: "y",
 	},
 	bottom: {
-		opposite: "top",
+		name: "bottom",
 		min: "left",
 		max: "right",
+		axis: "y",
 	},
+}
+
+DIRECTION.left.opposite = DIRECTION.right
+DIRECTION.right.opposite = DIRECTION.left
+DIRECTION.top.opposite = DIRECTION.bottom
+DIRECTION.bottom.opposite = DIRECTION.top
+
+DIRECTION.left.adjacent = DIRECTION.top
+DIRECTION.right.adjacent = DIRECTION.bottom
+DIRECTION.top.adjacent = DIRECTION.right
+DIRECTION.bottom.adjacent = DIRECTION.left
+
+const AXIS = {
+	x: DIRECTION.left,
+	y: DIRECTION.top,
 }
 
 //------ NO GLOBALS ABOVE THIS LINE ------//
@@ -312,7 +386,7 @@ const global = {
 //===========//
 // GAME LOOP //
 //===========//
-const stage = new Stage()
+const stage = new Stage({ speed: 1.0 })
 
 stage.start = (context) => {
 	const { canvas } = context
@@ -349,6 +423,8 @@ stage.tick = (context) => {
 stage.update = (context) => {
 	const { world, image, camera } = global
 
+	shared.clock = wrap(shared.clock + 1, 0, 999)
+
 	// Update cells
 	for (const cell of world.cells) {
 		// RAINBOW SPLITTER!
@@ -365,6 +441,10 @@ stage.update = (context) => {
 		continue
 		*/
 
+		if (cell.birth === shared.clock) {
+			continue
+		}
+
 		const element = ELEMENTS.get(cell.colour.splash)
 
 		if (element === undefined) {
@@ -372,7 +452,10 @@ stage.update = (context) => {
 		}
 
 		if (element.update !== undefined) {
-			element.update(cell, world, image)
+			const newCells = element.update(cell, world)
+			for (const newCell of newCells) {
+				newCell.draw(image)
+			}
 		}
 	}
 
