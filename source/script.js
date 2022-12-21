@@ -164,58 +164,6 @@ class World {
 		}
 	}
 
-	chop(cell, axis, targets) {
-		this.delete(cell)
-		const choppedCells = chop(cell, axis, targets)
-		for (const choppedCell of choppedCells) {
-			this.add(choppedCell)
-		}
-		return choppedCells
-	}
-
-	split(cell, [rows, columns]) {
-		this.delete(cell)
-		const splitCells = split(cell, [rows, columns])
-		for (const splitCell of splitCells) {
-			this.add(splitCell)
-		}
-		return splitCells
-	}
-
-	merge(cells, colour = cells[0].colour) {
-		for (const cell of cells) {
-			this.delete(cell)
-		}
-
-		const mergedCell = merge(cells, colour)
-		this.add(mergedCell)
-		return mergedCell
-	}
-
-	recolour(cell, colour) {
-		this.delete(cell)
-		const recolouredCell = new Cell({
-			bounds: cell.bounds,
-			colour,
-		})
-		this.add(recolouredCell)
-		return recolouredCell
-	}
-
-	reposition(cell, bounds) {
-		this.delete(cell)
-		const newBounds = {
-			...cell.bounds,
-			...bounds,
-		}
-		const movedCell = new Cell({
-			bounds: newBounds,
-			colour: cell.colour,
-		})
-		this.add(movedCell)
-		return movedCell
-	}
-
 	replace(cells, newCells) {
 		for (const cell of cells) {
 			this.delete(cell)
@@ -237,101 +185,6 @@ class World {
 			}
 		}
 	}
-}
-
-//===============//
-// SPLIT / MERGE //
-//===============//
-const split = (cell, [rows, columns]) => {
-	const { left, right, top, bottom } = cell.bounds
-	const [width, height] = cell.dimensions
-
-	const splitWidth = width / columns
-	const splitHeight = height / rows
-
-	const cells = []
-	for (let i = rows - 1; i >= 0; i--) {
-		for (let j = columns - 1; j >= 0; j--) {
-			const splitCell = new Cell({
-				bounds: {
-					left: left + j * splitWidth,
-					top: top + i * splitHeight,
-					right: right - (columns - j - 1) * splitWidth,
-					bottom: bottom - (rows - i - 1) * splitHeight,
-				},
-				colour: cell.colour,
-			})
-
-			cells.push(splitCell)
-		}
-	}
-
-	return cells
-}
-
-// Chop a cell into smaller cells along an axis
-// The targets are the positions along the axis where the cells should be chopped
-const chop = (cell, axis, targets) => {
-	if (targets.length === 0) {
-		return [cell]
-	}
-
-	const direction = AXIS[axis]
-
-	const cells = []
-	let currentTarget = cell.bounds[direction.min]
-	for (let i = 0; i <= targets.length; i++) {
-		const target = targets[i] || cell.bounds[direction.max]
-
-		const bounds = {
-			[direction.min]: currentTarget,
-			[direction.max]: target,
-			[direction.adjacent.min]: cell.bounds[direction.adjacent.min],
-			[direction.adjacent.max]: cell.bounds[direction.adjacent.max],
-		}
-
-		const choppedCell = new Cell({
-			bounds,
-			colour: cell.colour,
-		})
-
-		cells.push(choppedCell)
-		currentTarget = target
-	}
-
-	return cells
-}
-
-// From an array of cells, return a single cell that encompasses all of them
-// This assumes that the cells are all connected via touching
-// The cells can be in any order and can have different dimensions
-const merge = (cells, colour = cells[0].colour) => {
-	if (cells.length === 0) {
-		throw new Error("Cannot merge 0 cells")
-	}
-
-	let left = Infinity
-	let top = Infinity
-	let right = -Infinity
-	let bottom = -Infinity
-
-	for (const cell of cells) {
-		const { bounds } = cell
-		left = Math.min(left, bounds.left)
-		top = Math.min(top, bounds.top)
-		right = Math.max(right, bounds.right)
-		bottom = Math.max(bottom, bounds.bottom)
-	}
-
-	return new Cell({
-		colour,
-		bounds: {
-			left,
-			top,
-			right,
-			bottom,
-		},
-	})
 }
 
 //========//
@@ -489,9 +342,10 @@ stage.update = (context) => {
 		const colour = global.brush.colour
 		const cell = world.pick(camera.cast(scale(pointer.position, devicePixelRatio)))
 		if (cell) {
-			world.recolour(cell, colour)
+			const newCell = recolour(cell, colour)
+			world.replace([cell], [newCell])
 			cell.clear(image)
-			cell.draw(image)
+			newCell.draw(image)
 		}
 	}
 }
