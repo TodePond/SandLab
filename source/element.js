@@ -45,6 +45,39 @@ ELEMENTS.set(YELLOW.splash, {
 
 				return world.replace([cell, below], [newSandCell, newAirCell])
 			}
+
+			if (below.dimensions[0] > cell.dimensions[0]) {
+				// TODO: split the air cell so we can fall into it
+			}
+		}
+
+		// If there are multiple air cells below us, we can move down into them
+		// (but only if they have the same width as us)
+		if (belowContacts.length > 1 && belowContacts.every((c) => c.colour === BLACK)) {
+			// Make sure that all the air cells are the same height
+			const airHeights = belowContacts.map((c) => c.dimensions[1])
+			if (airHeights.every((h) => h === airHeights[0])) {
+				// Get the left and right bounds of the air cells
+				const belowLeft = Math.min(...belowContacts.map((c) => c.bounds.left))
+				const belowRight = Math.max(...belowContacts.map((c) => c.bounds.right))
+
+				// Make sure that the air cells are the same width as us
+				if (belowLeft === cell.bounds.left && belowRight === cell.bounds.right) {
+					const newSandCell = reposition(cell, {
+						top: belowContacts[0].bounds.top,
+						bottom: belowContacts[0].bounds.bottom,
+					})
+
+					const newAirCells = belowContacts.map((c) =>
+						reposition(c, {
+							top: cell.bounds.top,
+							bottom: cell.bounds.bottom,
+						}),
+					)
+
+					return world.replace([cell, ...belowContacts], [newSandCell, ...newAirCells])
+				}
+			}
 		}
 
 		return tryToSleep(cell, world)
