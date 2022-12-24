@@ -204,7 +204,7 @@ const tryToSleep = (cell, world) => {
 	// If we find a cell that we can merge with, we'll merge with it and return true
 	for (const candidate of candidates) {
 		// If the candidate is a different colour, we can't merge with it
-		if (candidate.colour !== cell.colour) {
+		if (candidate.colour.splash !== cell.colour.splash) {
 			continue
 		}
 
@@ -261,10 +261,6 @@ const tryToSleep = (cell, world) => {
 		const oldScore = Math.max(...oldAreas)
 
 		if (newScore <= oldScore && maybe(1.0)) {
-			return []
-		}
-
-		if (maybe(0.0)) {
 			return []
 		}
 

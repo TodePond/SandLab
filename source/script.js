@@ -309,18 +309,15 @@ stage.update = (context) => {
 	for (const cell of world.cells) {
 		// RAINBOW SPLITTER!
 
-		//if (cell.colour.splash === 0) {
-		//	if (maybe(0.05)) {
-		//const sleepedCells = tryToSleep(cell, world)
-		//if (sleepedCells.length > 0) {
-		//	world.replace([cell], sleepedCells)
-		//	for (const sleepedCell of sleepedCells) {
-		//		sleepedCell.draw(image)
-		//	}
-		//}
-		//}
-		//continue
-		//}
+		if (cell.colour.splash === 0) {
+			if (maybe(0.5)) {
+				const sleepedCells = tryToSleep(cell, world)
+				for (const sleepedCell of sleepedCells) {
+					sleepedCell.draw(image)
+				}
+			}
+			continue
+		}
 
 		if (cell.dimensions[0] > 0.002 && cell.dimensions[1] > 0.002 && maybe(0.05)) {
 			const splitCells = split(cell, [2, 2])
@@ -331,6 +328,11 @@ stage.update = (context) => {
 				splitCell.splash = splash
 				splitCell.draw(image)
 			}
+		} else if (cell.dimensions[0] <= 0.002 || cell.dimensions[1] <= 0.002) {
+			const splash = mutateSplash(cell.colour.splash)
+			const newCell = recolour(cell, new Splash(splash))
+			world.replace([cell], [newCell])
+			newCell.draw(image)
 		}
 
 		continue
