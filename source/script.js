@@ -107,7 +107,7 @@ const setImageAlpha = (image, alpha) => {
 // WORLD //
 //=======//
 class World {
-	constructor() {
+	constructor({ colour = BLACK } = {}) {
 		// Properties
 		this.cells = new Set()
 
@@ -120,7 +120,7 @@ class World {
 		}
 
 		// Setup
-		this.add(new Cell())
+		this.add(new Cell({ colour }))
 	}
 
 	add(cell) {
@@ -197,7 +197,10 @@ const getSplashDigits = (splash) => {
 }
 
 const mutateSplash = (splash) => {
-	const digits = getSplashDigits(splash).map((v, i) => clamp(v + (random() % (i === 0 ? 3 : 3)) - 1, 0, 9))
+	const digits = getSplashDigits(splash)
+	digits[0] = clamp(digits[0] + randomFrom([-2, -1]), 0, 9)
+	digits[1] = clamp(digits[1] + randomFrom([-2, -1]), 0, 9)
+	digits[2] = clamp(digits[2] + randomFrom([-2, -1]), 0, 9)
 	return parseInt(digits.join(""))
 }
 
@@ -252,18 +255,18 @@ const AXIS = {
 // GLOBAL //
 //========//
 const global = {
-	world: new World(),
+	world: new World({ colour: WHITE }),
 	camera: new View(),
 	image: undefined,
 	brush: {
-		colour: YELLOW,
+		colour: WHITE,
 	},
 }
 
 //===========//
 // GAME LOOP //
 //===========//
-const stage = new Stage({ speed: 1.0 })
+const stage = new Stage({ speed: 1.0, paused: true })
 
 stage.start = (context) => {
 	const { canvas } = context
@@ -305,9 +308,23 @@ stage.update = (context) => {
 	// Update cells
 	for (const cell of world.cells) {
 		// RAINBOW SPLITTER!
-		/*
+
+		//if (cell.colour.splash === 0) {
+		//	if (maybe(0.05)) {
+		//const sleepedCells = tryToSleep(cell, world)
+		//if (sleepedCells.length > 0) {
+		//	world.replace([cell], sleepedCells)
+		//	for (const sleepedCell of sleepedCells) {
+		//		sleepedCell.draw(image)
+		//	}
+		//}
+		//}
+		//continue
+		//}
+
 		if (cell.dimensions[0] > 0.002 && cell.dimensions[1] > 0.002 && maybe(0.05)) {
-			const splitCells = world.split(cell, [2, 2])
+			const splitCells = split(cell, [2, 2])
+			world.replace([cell], splitCells)
 			for (const splitCell of splitCells) {
 				const splash = mutateSplash(splitCell.colour.splash)
 				splitCell.colour = new Splash(splash)
@@ -315,8 +332,8 @@ stage.update = (context) => {
 				splitCell.draw(image)
 			}
 		}
+
 		continue
-		*/
 
 		if (cell.birth === shared.clock) {
 			continue
