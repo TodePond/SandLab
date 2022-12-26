@@ -408,7 +408,7 @@ const HabitatFrogasaurus = {}
 				return Math.abs(a - b)
 			}
 
-			const displacement = subtractVector(a, b)
+			const displacement = subtract(a, b)
 			const [dx, dy, dz = 0] = displacement
 			const distance = Math.hypot(dx, dy, dz)
 			return distance
@@ -420,7 +420,7 @@ const HabitatFrogasaurus = {}
 					"[Habitat] Sorry, only 2D vectors are supported at the moment. Please bug @todepond to support other lengths :)",
 				)
 			}
-			const displacement = subtractVector(a, b)
+			const displacement = subtract(a, b)
 			const [dx, dy] = displacement
 			const angle = Math.atan2(dy, dx)
 			return angle

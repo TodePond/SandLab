@@ -182,9 +182,19 @@ const pickContacts = (cell, world, edge = "right") => {
 // 1. The cell is touching a cell that perfectly lines up with it
 // 2. The cell is touching a bigger cell that can be split into multiple cells that line up with it
 // 3. Probably more
-const tryToSleep = (cell, world) => {
+const tryToSleep = (
+	cell,
+	world,
+	{
+		edges = Object.keys(DIRECTION),
+		judge = (cells) => {
+			const areas = cells.map((cell) => cell.dimensions[0] * cell.dimensions[1])
+			return Math.max(...areas)
+		},
+	} = {},
+) => {
 	// First, let's pick a random direction to look in
-	const edge = randomFrom(Object.keys(DIRECTION))
+	const edge = randomFrom(edges)
 	const direction = DIRECTION[edge]
 
 	// Get all the cells that are touching this cell (in a randomly ordered array)
@@ -254,11 +264,8 @@ const tryToSleep = (cell, world) => {
 		// Return all the cells we created
 		const createdCells = [mergedCell, ...splitCells.filter((c, i) => i !== mergeIndex)]
 
-		const newAreas = createdCells.map((c) => c.dimensions[0] * c.dimensions[1])
-		const oldAreas = [cell, candidate].map((c) => c.dimensions[0] * c.dimensions[1])
-
-		const newScore = Math.max(...newAreas)
-		const oldScore = Math.max(...oldAreas)
+		const newScore = judge(createdCells)
+		const oldScore = judge([cell, candidate])
 
 		if (newScore <= oldScore && maybe(1.0)) {
 			return []
@@ -268,4 +275,15 @@ const tryToSleep = (cell, world) => {
 	}
 
 	return []
+}
+
+// Get the distance from a point to any point on the bounds of a rectangle or inside the rectangle
+const distanceToBounds = (point, bounds) => {
+	const { x, y } = point
+	const { left, right, top, bottom } = bounds
+
+	const dx = Math.max(left - x, 0, x - right)
+	const dy = Math.max(top - y, 0, y - bottom)
+
+	return Math.sqrt(dx * dx + dy * dy)
 }

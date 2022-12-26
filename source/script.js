@@ -245,9 +245,25 @@ DIRECTION.top.adjacent = DIRECTION.right
 DIRECTION.bottom.adjacent = DIRECTION.left
 
 const AXIS = {
-	x: DIRECTION.left,
-	y: DIRECTION.top,
+	x: {
+		name: "x",
+		min: "top",
+		max: "bottom",
+		edges: ["left", "right"],
+	},
+	y: {
+		name: "y",
+		min: "left",
+		max: "right",
+		edges: ["top", "bottom"],
+	},
 }
+
+AXIS.x.opposite = AXIS.x
+AXIS.y.opposite = AXIS.y
+
+AXIS.x.adjacent = AXIS.y
+AXIS.y.adjacent = AXIS.x
 
 //------ NO GLOBALS ABOVE THIS LINE ------//
 
@@ -255,7 +271,7 @@ const AXIS = {
 // GLOBAL //
 //========//
 const global = {
-	world: new World({ colour: WHITE }),
+	world: new World({ colour: GREY }),
 	camera: new View(),
 	image: undefined,
 	brush: {
@@ -266,7 +282,7 @@ const global = {
 //===========//
 // GAME LOOP //
 //===========//
-const stage = new Stage({ speed: 1.0, paused: true })
+const stage = new Stage({ speed: 1.0, paused: false })
 
 stage.start = (context) => {
 	const { canvas } = context
@@ -309,6 +325,7 @@ stage.update = (context) => {
 	for (const cell of world.cells) {
 		// RAINBOW SPLITTER!
 
+		/*
 		if (cell.colour.splash === 0) {
 			if (maybe(0.5)) {
 				const sleepedCells = tryToSleep(cell, world)
@@ -335,7 +352,7 @@ stage.update = (context) => {
 			newCell.draw(image)
 		}
 
-		continue
+		continue*/
 
 		if (cell.birth === shared.clock) {
 			continue
