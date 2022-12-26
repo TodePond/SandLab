@@ -68,6 +68,11 @@ const Cell = class {
 				BORDER_WIDTH = 0
 			}
 		}
+
+		const area = this.dimensions[0] * this.dimensions[1]
+
+		const fillColour = lerp([BLACK, GREEN], area ** 0.25).map((v) => Math.floor(v))
+
 		for (let y = top; y <= bottom; y++) {
 			for (let x = left; x <= right; x++) {
 				const isBorder =
@@ -77,7 +82,7 @@ const Cell = class {
 						y < top + BORDER_WIDTH ||
 						y > bottom - BORDER_WIDTH)
 
-				const colour = isBorder ? VOID : this.colour
+				const colour = isBorder ? VOID : fillColour
 
 				image.data[i + 0] = colour[0]
 				image.data[i + 1] = colour[1]

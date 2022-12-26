@@ -267,7 +267,7 @@ const tryToSleep = (
 		const newScore = judge(createdCells)
 		const oldScore = judge([cell, candidate])
 
-		if (newScore <= oldScore && maybe(1.0)) {
+		if (newScore <= oldScore) {
 			return []
 		}
 

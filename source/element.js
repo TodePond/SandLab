@@ -1,6 +1,8 @@
 const ELEMENTS = new Map()
 
 const pointer = getPointer()
+const POINTER_RADIUS = 0.03
+const POINTER_FADE_RADIUS = 0.2
 ELEMENTS.set(GREY.splash, {
 	name: "Air",
 	update: (cell, world) => {
@@ -10,8 +12,10 @@ ELEMENTS.set(GREY.splash, {
 		if (pointer.position.x !== undefined) {
 			const pointerPosition = camera.cast(scale(pointer.position, devicePixelRatio))
 			const distanceFromPointer = distanceToBounds(pointerPosition, cell.bounds)
-			if (distanceFromPointer < 0.05) {
+			if (distanceFromPointer < POINTER_RADIUS) {
 				target = 1 / 128
+			} else if (distanceFromPointer < POINTER_FADE_RADIUS) {
+				target = lerp([1 / 128, 1], distanceFromPointer - POINTER_RADIUS)
 			}
 		}
 
