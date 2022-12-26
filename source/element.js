@@ -4,10 +4,11 @@ const pointer = getPointer()
 const POINTER_RADIUS = 0.01
 const POINTER_FADE_RADIUS = 0.2
 const POINTER_CELL_SIZE = 1 / 512
+let AIR_TARGET = 1
 ELEMENTS.set(GREY.splash, {
 	name: "Air",
 	update: (cell, world) => {
-		let target = 1
+		let target = AIR_TARGET
 
 		// Get pointer position in world coordinates
 		if (pointer.position.x !== undefined) {
