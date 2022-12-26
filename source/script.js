@@ -71,7 +71,7 @@ const Cell = class {
 
 		const area = this.dimensions[0] * this.dimensions[1]
 
-		const fillColour = lerp([BLACK, GREEN], area ** 0.25).map((v) => Math.floor(v))
+		const fillColour = lerp([BLACK, BLUE], area ** 0.25).map((v) => Math.floor(v))
 
 		for (let y = top; y <= bottom; y++) {
 			for (let x = left; x <= right; x++) {
