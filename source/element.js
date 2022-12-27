@@ -1,9 +1,9 @@
 const ELEMENTS = new Map()
 
 const pointer = getPointer()
-const POINTER_RADIUS = 0.015
+const POINTER_RADIUS = 0.03
 const POINTER_FADE_RADIUS = 0.1
-const POINTER_CELL_SIZE = 1 / 512
+const POINTER_CELL_SIZE = 1 / 256
 let AIR_TARGET = 1
 ELEMENTS.set(GREY.splash, {
 	name: "Air",
@@ -71,7 +71,7 @@ ELEMENTS.set(YELLOW.splash, {
 
 		// If there's ONLY an air cell below us, we can fall into it
 		// (but only if it has the same width as us)
-		if (belowContacts.length === 1 && belowContacts[0].colour === BLACK) {
+		if (belowContacts.length === 1 && belowContacts[0].colour === GREY) {
 			const below = belowContacts[0]
 			const newContactPoint = cell.bounds.top + below.dimensions[1]
 			if (below.dimensions[0] === cell.dimensions[0]) {
@@ -95,7 +95,7 @@ ELEMENTS.set(YELLOW.splash, {
 
 		// If there are multiple air cells below us, we can move down into them
 		// (but only if they have the same width as us)
-		if (belowContacts.length > 1 && belowContacts.every((c) => c.colour === BLACK)) {
+		if (belowContacts.length > 1 && belowContacts.every((c) => c.colour === GREY)) {
 			// Make sure that all the air cells are the same height
 			const airHeights = belowContacts.map((c) => c.dimensions[1])
 			if (airHeights.every((h) => h === airHeights[0])) {

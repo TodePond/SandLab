@@ -287,7 +287,7 @@ const global = {
 	camera: new View(),
 	image: undefined,
 	brush: {
-		colour: RED,
+		colour: YELLOW,
 	},
 }
 
