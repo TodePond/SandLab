@@ -242,6 +242,7 @@ const sleep = (cell, world, edge, { judge }) => {
 			continue
 		}
 
+		// TODO: This should chop off more cleverly, rather than just sleep with anything
 		// If the candidate is the exact same size as us, we can merge with it
 		if (
 			candidate.bounds[direction.min] === cell.bounds[direction.min] &&
