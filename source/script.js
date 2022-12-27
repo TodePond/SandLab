@@ -71,7 +71,7 @@ const Cell = class {
 
 		const area = this.dimensions[0] * this.dimensions[1]
 
-		const fillColour = lerp([BLACK, ORANGE], area ** 0.25).map((v) => Math.floor(v))
+		const fillColour = lerp([[0, 0, 0], GREEN], area ** 0.25).map((v) => Math.floor(v))
 
 		for (let y = top; y <= bottom; y++) {
 			for (let x = left; x <= right; x++) {
@@ -218,24 +218,28 @@ const DIRECTION = {
 		min: "top",
 		max: "bottom",
 		axis: "x",
+		dimensionNumber: 1,
 	},
 	right: {
 		name: "right",
 		min: "top",
 		max: "bottom",
 		axis: "x",
+		dimensionNumber: 1,
 	},
 	top: {
 		name: "top",
 		min: "left",
 		max: "right",
 		axis: "y",
+		dimensionNumber: 0,
 	},
 	bottom: {
 		name: "bottom",
 		min: "left",
 		max: "right",
 		axis: "y",
+		dimensionNumber: 0,
 	},
 }
 
@@ -255,12 +259,14 @@ const AXIS = {
 		min: "top",
 		max: "bottom",
 		edges: ["left", "right"],
+		dimensionNumber: 1,
 	},
 	y: {
 		name: "y",
 		min: "left",
 		max: "right",
 		edges: ["top", "bottom"],
+		dimensionNumber: 0,
 	},
 }
 

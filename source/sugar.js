@@ -171,6 +171,9 @@ const pickContacts = (cell, world, edge = "right") => {
 	return cells
 }
 
+// TODO: Sleeping should be an controlled by an inherent 'target size' property of a cell
+// (currently it's done manually)
+
 // 'Sleeping' means merging with a nearby cell so that we don't have to
 // update or draw this cell every frame
 //
@@ -191,6 +194,8 @@ const tryToSleep = (
 			const areas = cells.map((cell) => cell.dimensions[0] * cell.dimensions[1])
 			return Math.max(...areas)
 		},
+		minSize = 0.0,
+		maxSize = 1.0,
 	} = {},
 ) => {
 	let winner = undefined
@@ -200,6 +205,15 @@ const tryToSleep = (
 		const replacement = sleep(cell, world, edge, { judge })
 		const { oldCells, newCells } = replacement
 		if (newCells.length === 0) continue
+
+		const direction = DIRECTION[edge]
+		const { dimensionNumber } = direction
+
+		const [newCell] = newCells
+		const dimension = newCell.dimensions[dimensionNumber]
+		if (dimension < minSize) continue
+		if (dimension > maxSize) continue
+
 		const newScore = judge(newCells)
 		const oldScore = judge(oldCells)
 		if (newScore > oldScore && newScore > highScore) {
@@ -216,7 +230,7 @@ const tryToSleep = (
 	return world.replace(oldCells, newCells)
 }
 
-const sleep = (cell, world, edge, { judge }) => {
+const sleep = (cell, world, edge) => {
 	const failure = { oldCells: [], newCells: [] }
 
 	const direction = DIRECTION[edge]
@@ -268,6 +282,9 @@ const sleep = (cell, world, edge, { judge }) => {
 		splitCandidates.push(candidate)
 	}
 
+	// TODO: Remove this loop
+	// There should only ever be one candidate that we can merge with
+	// so this is a pointless loop
 	for (const candidate of splitCandidates) {
 		// Where should we split the candidate?
 		// We might need to chop in two places, or just one

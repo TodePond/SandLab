@@ -2,7 +2,7 @@ const ELEMENTS = new Map()
 
 const pointer = getPointer()
 const POINTER_RADIUS = 0.015
-const POINTER_FADE_RADIUS = 0.5
+const POINTER_FADE_RADIUS = 0.1
 const POINTER_CELL_SIZE = 1 / 512
 let AIR_TARGET = 1
 ELEMENTS.set(GREY.splash, {
@@ -24,25 +24,13 @@ ELEMENTS.set(GREY.splash, {
 		const errorScale = cell.dimensions.map((v) => v / target)
 
 		// If a cell is too big, split it
-		const veryTooWide = errorScale[0] > 2.0
-		const veryTooTall = errorScale[1] > 2.0
+		const veryTooWide = errorScale[0] >= 2.0
+		const veryTooTall = errorScale[1] >= 2.0
 		if (veryTooWide || veryTooTall) {
 			const columns = veryTooTall ? 2 : 1
 			const rows = veryTooWide ? 2 : 1
 			const splitCells = split(cell, [columns, rows])
 			return world.replace([cell], splitCells)
-		}
-
-		const tooWide = errorScale[0] > 1.0
-		const tooTall = errorScale[1] > 1.0
-		if (tooWide) {
-			const chopPoint = cell.bounds.left + target
-			const choppedCells = chop(cell, "y", [chopPoint])
-			return world.replace([cell], choppedCells)
-		} else if (tooTall) {
-			const chopPoint = cell.bounds.top + target
-			const choppedCells = chop(cell, "x", [chopPoint])
-			return world.replace([cell], choppedCells)
 		}
 
 		const judge = undefined
