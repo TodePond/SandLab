@@ -193,8 +193,32 @@ const tryToSleep = (
 		},
 	} = {},
 ) => {
-	// First, let's pick a random direction to look in
-	const edge = randomFrom(edges)
+	let winner = undefined
+	let highScore = -Infinity
+
+	for (const edge of shuffleArray(edges)) {
+		const replacement = sleep(cell, world, edge, { judge })
+		const { oldCells, newCells } = replacement
+		if (newCells.length === 0) continue
+		const newScore = judge(newCells)
+		const oldScore = judge(oldCells)
+		if (newScore > oldScore && newScore > highScore) {
+			highScore = newScore
+			winner = replacement
+		}
+	}
+
+	if (winner === undefined) {
+		return []
+	}
+
+	const { oldCells, newCells } = winner
+	return world.replace(oldCells, newCells)
+}
+
+const sleep = (cell, world, edge, { judge }) => {
+	const failure = { oldCells: [], newCells: [] }
+
 	const direction = DIRECTION[edge]
 
 	// Get all the cells that are touching this cell (in a randomly ordered array)
@@ -202,7 +226,7 @@ const tryToSleep = (
 
 	// If there are no contacts, we can't merge with anything
 	if (contacts.length === 0) {
-		return []
+		return failure
 	}
 
 	// Shuffle the contacts so that we don't always merge with the same cell
@@ -223,8 +247,9 @@ const tryToSleep = (
 			candidate.bounds[direction.min] === cell.bounds[direction.min] &&
 			candidate.bounds[direction.max] === cell.bounds[direction.max]
 		) {
-			const newCell = merge([cell, candidate])
-			return world.replace([cell, candidate], [newCell])
+			const newCells = [merge([cell, candidate])]
+			const oldCells = [cell, candidate]
+			return { oldCells, newCells }
 		}
 
 		// If the candidate is smaller at either end, we can't merge with it
@@ -262,19 +287,12 @@ const tryToSleep = (
 		const mergedCell = merge([cell, splitCells[mergeIndex]])
 
 		// Return all the cells we created
-		const createdCells = [mergedCell, ...splitCells.filter((c, i) => i !== mergeIndex)]
-
-		const newScore = judge(createdCells)
-		const oldScore = judge([cell, candidate])
-
-		if (newScore <= oldScore) {
-			return []
-		}
-
-		return world.replace([cell, candidate], createdCells)
+		const oldCells = [cell, candidate]
+		const newCells = [mergedCell, ...splitCells.filter((c, i) => i !== mergeIndex)]
+		return { oldCells, newCells }
 	}
 
-	return []
+	return failure
 }
 
 // Get the distance from a point to any point on the bounds of a rectangle or inside the rectangle
