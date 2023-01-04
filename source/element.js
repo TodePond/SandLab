@@ -3,41 +3,82 @@ const ELEMENTS = new Map()
 const pointer = getPointer()
 const POINTER_RADIUS = 0.03
 const POINTER_FADE_RADIUS = 0.1
-const POINTER_CELL_SIZE = 1 / 256
+const POINTER_CELL_SIZE = 1 / 360
 let AIR_TARGET = 1
+const getPointerAirTarget = (cell) => {
+	if (pointer.position.x === undefined) {
+		return AIR_TARGET
+	}
+
+	const pointerPosition = camera.cast(scale(pointer.position, devicePixelRatio))
+	const distanceFromPointer = distanceToBounds(pointerPosition, cell.bounds)
+
+	if (distanceFromPointer < POINTER_RADIUS) {
+		return POINTER_CELL_SIZE
+	} else if (distanceFromPointer < POINTER_FADE_RADIUS) {
+		return lerp([POINTER_CELL_SIZE, 1], distanceFromPointer - POINTER_RADIUS)
+	}
+
+	return AIR_TARGET
+}
+
 ELEMENTS.set(GREY.splash, {
 	name: "Air",
 	update: (cell, world) => {
-		let target = AIR_TARGET
+		const target = getPointerAirTarget(cell)
+		const dimensionErrorScale = cell.dimensions.map((v) => v / target)
 
-		// Get pointer position in world coordinates
-		if (pointer.position.x !== undefined) {
-			const pointerPosition = camera.cast(scale(pointer.position, devicePixelRatio))
-			const distanceFromPointer = distanceToBounds(pointerPosition, cell.bounds)
-			if (distanceFromPointer < POINTER_RADIUS) {
-				target = POINTER_CELL_SIZE
-			} else if (distanceFromPointer < POINTER_FADE_RADIUS) {
-				target = lerp([POINTER_CELL_SIZE, 1], distanceFromPointer - POINTER_RADIUS)
-			}
-		}
+		// Function that finds the error of all cells from their target size
+		const judge = [
+			(cells) => {
+				let errors = []
+				const validAreas = []
+				for (const cell of cells) {
+					const target = getPointerAirTarget(cell)
+					const dimensionErrorScale = cell.dimensions.map((v) => v / target)
+					const dimensionErrorDiff = dimensionErrorScale.map((v) => Math.abs(v - 1))
+					const errorDiff = dimensionErrorDiff[0] * dimensionErrorDiff[1]
+					if (dimensionErrorScale < 1) {
+						validAreas.push(cell.area)
+					}
+					errors.push(errorDiff)
+				}
 
-		const errorScale = cell.dimensions.map((v) => v / target)
+				const maxArea = validAreas.length > 0 ? Math.max(...validAreas) : 1
 
-		// If a cell is too big, split it
-		const veryTooWide = errorScale[0] >= 2.0
-		const veryTooTall = errorScale[1] >= 2.0
+				const sum = errors.reduce((a, b) => a + b, 0)
+				const average = sum / errors.length
+				const score = -average / maxArea
+				return score
+			},
+		]
+
+		// If a cell is too big, try to split it
+		const veryTooWide = dimensionErrorScale[0] >= 2.0
+		const veryTooTall = dimensionErrorScale[1] >= 2.0
 		if (veryTooWide || veryTooTall) {
 			const columns = veryTooTall ? 2 : 1
 			const rows = veryTooWide ? 2 : 1
 			const splitCells = split(cell, [columns, rows])
-			return world.replace([cell], splitCells)
+
+			// Judge the split cells and use them if they're better
+			const splitScores = judge.map((j) => j(splitCells))
+			const originalScores = judge.map((j) => j([cell]))
+			if (splitScores.every((s, i) => s > originalScores[i])) {
+				return world.replace([cell], splitCells)
+			}
 		}
 
-		const judge = undefined
+		/*
+		judge[1] = (cells) => {
+			const areas = cells.map((cell) => cell.dimensions[0] * cell.dimensions[1])
+			return Math.max(...areas)
+		}
+		*/
 
-		// If a cell is too small, sleep it
-		const tooThin = errorScale[1] < 1.0
-		const tooShort = errorScale[0] < 1.0
+		// If a cell is too small, try to sleep it
+		const tooThin = dimensionErrorScale[1] < 1.0
+		const tooShort = dimensionErrorScale[0] < 1.0
 		if (tooThin && tooShort) {
 			return tryToSleep(cell, world, { judge })
 		}

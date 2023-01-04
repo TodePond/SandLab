@@ -190,16 +190,18 @@ const tryToSleep = (
 	world,
 	{
 		edges = Object.keys(DIRECTION),
-		judge = (cells) => {
-			const areas = cells.map((cell) => cell.dimensions[0] * cell.dimensions[1])
-			return Math.max(...areas)
-		},
+		judge = [
+			(cells) => {
+				const areas = cells.map((cell) => cell.dimensions[0] * cell.dimensions[1])
+				return Math.max(...areas)
+			},
+		],
 		minSize = 0.0,
 		maxSize = 1.0,
 	} = {},
 ) => {
 	let winner = undefined
-	let highScore = -Infinity
+	let highScores = judge.map(() => -Infinity)
 
 	for (const edge of shuffleArray(edges)) {
 		const replacement = sleep(cell, world, edge, { judge })
@@ -214,10 +216,11 @@ const tryToSleep = (
 		if (dimension < minSize) continue
 		if (dimension > maxSize) continue
 
-		const newScore = judge(newCells)
-		const oldScore = judge(oldCells)
-		if (newScore > oldScore && newScore > highScore) {
-			highScore = newScore
+		const newScores = judge.map((j) => j(newCells))
+		const oldScores = judge.map((j) => j(oldCells))
+
+		if (newScores.every((v, i) => v >= oldScores[i]) && newScores.every((v, i) => v >= highScores[i])) {
+			highScores = newScores
 			winner = replacement
 		}
 	}
