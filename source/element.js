@@ -38,10 +38,11 @@ ELEMENTS.set(GREY.splash, {
 		// Function that finds the error of all cells from their target size
 		const judge = (cells) => {
 			let errors = []
+
 			for (const cell of cells) {
 				const target = getPointerAirTarget(cell)
 				const dimensionErrorScale = cell.dimensions.map((v) => v / target)
-				const dimensionErrorDiff = dimensionErrorScale.map((v) => Math.abs(v - 1))
+				const dimensionErrorDiff = dimensionErrorScale.map((v) => Math.abs(1 - v))
 				const errorDiff = Math.max(dimensionErrorDiff[0], dimensionErrorDiff[1])
 				errors.push(errorDiff)
 			}
@@ -52,7 +53,13 @@ ELEMENTS.set(GREY.splash, {
 			return score
 		}
 
-		const compare = (a, b) => a >= b
+		const compareSplit = (a, b = -Infinity) => {
+			return a >= b
+		}
+
+		const compare = (a, b = -Infinity) => {
+			return a >= b
+		}
 
 		// If a cell is too big, try to split it
 		const veryTooWide = dimensionErrorScale[0] >= 2.0
@@ -63,9 +70,9 @@ ELEMENTS.set(GREY.splash, {
 			const splitCells = split(cell, [columns, rows])
 
 			// Judge the split cells and use them if they're better
-			const splitScores = judge(splitCells, () => target)
-			const originalScores = judge([cell], () => target)
-			if (compare(splitScores, originalScores)) {
+			const splitScores = judge(splitCells)
+			const originalScores = judge([cell])
+			if (compareSplit(splitScores, originalScores)) {
 				return world.replace([cell], splitCells)
 			}
 		}

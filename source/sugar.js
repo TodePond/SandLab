@@ -267,7 +267,7 @@ const defaultJudge = (cells) => {
 	return maxArea
 }
 
-const defaultCompare = (a, b) => a > b
+const defaultCompare = (a, b = -Infinity) => a > b
 
 // 'Sleeping' means merging with a nearby cell so that we don't have to
 // update or draw this cell every frame
@@ -286,7 +286,7 @@ const tryToSleep = (
 	{ edges = Object.keys(DIRECTION), judge = defaultJudge, compare = defaultCompare } = {},
 ) => {
 	let winner = undefined
-	let highScore = -Infinity
+	let highScore = undefined
 
 	for (const edge of shuffleArray(edges)) {
 		const replacement = sleep(cell, world, edge)
@@ -309,6 +309,8 @@ const tryToSleep = (
 	const { oldCells, newCells } = winner
 	return world.replace(oldCells, newCells)
 }
+
+const average = (array) => array.reduce((a, b) => a + b, 0) / array.length
 
 const scoresAreBetter = (a, b) => {
 	for (let i = 0; i < a.length; i++) {
