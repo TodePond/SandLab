@@ -261,35 +261,13 @@ const swapSnips = (cell, snips, edge) => {
 	return [newCell, ...newSnips]
 }
 
-const defaultJudge = (cells, getTarget = () => 1.0) => {
-	const maxErrors = []
-	const sumErrors = []
-	const minErrors = []
-	const productErrors = []
-	for (const cell of cells) {
-		const target = getTarget(cell)
-
-		const dimensionErrorScale = cell.dimensions.map((v) => v / target)
-		const dimensionErrorDiff = dimensionErrorScale.map((v) => Math.abs(v - 1))
-
-		maxErrors.push(Math.max(...dimensionErrorDiff))
-		sumErrors.push(dimensionErrorDiff[0] + dimensionErrorDiff[1])
-		productErrors.push(dimensionErrorDiff[0] * dimensionErrorDiff[1])
-		minErrors.push(Math.min(...dimensionErrorDiff))
-	}
-
-	const scores = []
-
-	for (const errors of [maxErrors]) {
-		const sum = errors.reduce((a, b) => a + b, 0)
-		const average = sum / errors.length
-		const max = Math.max(...errors)
-		//scores.push(-average)
-		scores.push(-max)
-	}
-
-	return scores
+const defaultJudge = (cells) => {
+	const areas = cells.map((cell) => cell.dimensions[0] * cell.dimensions[1])
+	const maxArea = Math.max(...areas)
+	return maxArea
 }
+
+const defaultCompare = (a, b) => a > b
 
 // 'Sleeping' means merging with a nearby cell so that we don't have to
 // update or draw this cell every frame
@@ -302,20 +280,24 @@ const defaultJudge = (cells, getTarget = () => 1.0) => {
 // 1. The cell is touching a cell that perfectly lines up with it
 // 2. The cell is touching a bigger cell that can be split into multiple cells that line up with it
 // 3. Probably more
-const tryToSleep = (cell, world, { edges = Object.keys(DIRECTION), judge = defaultJudge, target = () => 1.0 } = {}) => {
+const tryToSleep = (
+	cell,
+	world,
+	{ edges = Object.keys(DIRECTION), judge = defaultJudge, compare = defaultCompare } = {},
+) => {
 	let winner = undefined
-	let highScores = []
+	let highScore = -Infinity
 
 	for (const edge of shuffleArray(edges)) {
 		const replacement = sleep(cell, world, edge)
 		const { oldCells, newCells } = replacement
 		if (newCells.length === 0) continue
 
-		const newScores = judge(newCells, target)
-		const oldScores = judge(oldCells, target)
+		const newScore = judge(newCells)
+		const oldScore = judge(oldCells)
 
-		if (scoresAreBetter(newScores, oldScores) && scoresAreBetter(newScores, highScores)) {
-			highScores = newScores
+		if (compare(newScore, oldScore) && compare(newScore, highScore)) {
+			highScore = newScore
 			winner = replacement
 		}
 	}
