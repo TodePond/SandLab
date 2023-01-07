@@ -252,6 +252,7 @@ const DIRECTION = {
 		max: "bottom",
 		axis: "x",
 		dimensionNumber: 1,
+		sign: -1,
 	},
 	right: {
 		name: "right",
@@ -259,6 +260,7 @@ const DIRECTION = {
 		max: "bottom",
 		axis: "x",
 		dimensionNumber: 1,
+		sign: 1,
 	},
 	top: {
 		name: "top",
@@ -266,6 +268,7 @@ const DIRECTION = {
 		max: "right",
 		axis: "y",
 		dimensionNumber: 0,
+		sign: -1,
 	},
 	bottom: {
 		name: "bottom",
@@ -273,6 +276,7 @@ const DIRECTION = {
 		max: "right",
 		axis: "y",
 		dimensionNumber: 0,
+		sign: 1,
 	},
 }
 
@@ -293,6 +297,7 @@ const AXIS = {
 		max: "bottom",
 		edges: ["left", "right"],
 		dimensionNumber: 1,
+		sign: 1,
 	},
 	y: {
 		name: "y",
@@ -300,6 +305,7 @@ const AXIS = {
 		max: "right",
 		edges: ["top", "bottom"],
 		dimensionNumber: 0,
+		sign: 1,
 	},
 }
 

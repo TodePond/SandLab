@@ -182,7 +182,9 @@ const snipContacts = (cell, contacts, edge, reach) => {
 	const adjacent = direction.adjacent
 	const oppositeEdge = opposite.name
 
-	const contactReach = Math.min(reach, ...contacts.map((contact) => contact.dimensions[adjacent.dimensionNumber]))
+	const minMax = direction.sign === 1 ? Math.max : Math.min
+
+	const contactReach = minMax(reach, ...contacts.map((contact) => contact.dimensions[adjacent.dimensionNumber]))
 	const sizeds = []
 	const excesses = []
 
@@ -238,10 +240,8 @@ const swapSnips = (cell, snips, edge) => {
 
 	const snipsSize = snips[0].dimensions[adjacent.dimensionNumber] //all snips should be the same size
 
-	snipsSize
-
 	const back = cell.bounds[oppositeEdge]
-	const middle = back + snipsSize
+	const middle = back + snipsSize * direction.sign
 	const front = snips[0].bounds[edge]
 
 	const newCell = reposition(cell, {

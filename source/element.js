@@ -107,7 +107,7 @@ ELEMENTS.set(GREY.splash, {
 ELEMENTS.set(YELLOW.splash, {
 	name: "Sand",
 	update: (cell, world) => {
-		const below = pickSnips(cell, world, "bottom", FALL_SPEED)
+		const below = pickSnips(cell, world, "top", -FALL_SPEED)
 
 		if (below.snips.length === 0) {
 			return tryToSleep(cell, world)
@@ -115,7 +115,13 @@ ELEMENTS.set(YELLOW.splash, {
 
 		// If there isn't solid below, fall
 		if (below.snips.every((c) => !SOLID.has(c.colour))) {
-			const movedCells = swapSnips(cell, below.snips, "bottom")
+			const above = pickSnips(cell, world, "top", FALL_SPEED)
+			let sand = cell
+			if (above.snips.length > 0 && above.snips.every((v) => v.colour === YELLOW)) {
+				//sand = merge([cell, ...above.snips])
+			}
+
+			const movedCells = swapSnips(sand, below.snips, "top")
 			//return world.replace([cell, ...below.contacts], [cell, ...below.excesses, ...below.snips])
 			return world.replace([cell, ...below.contacts], [...below.excesses, ...movedCells])
 		}
