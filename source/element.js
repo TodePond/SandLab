@@ -22,6 +22,13 @@ const getPointerAirTarget = (cell) => {
 	return AIR_TARGET
 }
 
+// Debug: Adjust AIR_TARGET based on pointer y position
+/*on("pointermove", (event) => {
+	const y = event.clientY / window.innerHeight
+	const target = lerp([0.00001, 0.5], clamp(y, 0, Infinity))
+	AIR_TARGET = target
+})*/
+
 ELEMENTS.set(GREY.splash, {
 	name: "Air",
 	update: (cell, world) => {
@@ -32,23 +39,17 @@ ELEMENTS.set(GREY.splash, {
 		const judge = [
 			(cells) => {
 				let errors = []
-				const validAreas = []
 				for (const cell of cells) {
 					const target = getPointerAirTarget(cell)
 					const dimensionErrorScale = cell.dimensions.map((v) => v / target)
 					const dimensionErrorDiff = dimensionErrorScale.map((v) => Math.abs(v - 1))
-					const errorDiff = dimensionErrorDiff[0] * dimensionErrorDiff[1]
-					if (dimensionErrorScale < 1) {
-						validAreas.push(cell.area)
-					}
+					const errorDiff = Math.max(dimensionErrorDiff[0], dimensionErrorDiff[1])
 					errors.push(errorDiff)
 				}
 
-				const maxArea = validAreas.length > 0 ? Math.max(...validAreas) : 1
-
 				const sum = errors.reduce((a, b) => a + b, 0)
 				const average = sum / errors.length
-				const score = -average / maxArea
+				const score = -average
 				return score
 			},
 		]
@@ -64,7 +65,7 @@ ELEMENTS.set(GREY.splash, {
 			// Judge the split cells and use them if they're better
 			const splitScores = judge.map((j) => j(splitCells))
 			const originalScores = judge.map((j) => j([cell]))
-			if (splitScores.every((s, i) => s > originalScores[i])) {
+			if (splitScores.every((s, i) => s >= originalScores[i])) {
 				return world.replace([cell], splitCells)
 			}
 		}
@@ -106,7 +107,7 @@ ELEMENTS.set(YELLOW.splash, {
 	update: (cell, world) => {
 		const belowContacts = pickContacts(cell, world, "bottom")
 
-		if (belowContacts.length === 0) {
+		if (true || belowContacts.length === 0) {
 			return tryToSleep(cell, world)
 		}
 
