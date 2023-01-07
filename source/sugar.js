@@ -43,6 +43,10 @@ const chop = (cell, axis, targets) => {
 	for (let i = 0; i <= targets.length; i++) {
 		const target = targets[i] || cell.bounds[direction.max]
 
+		if (target === currentTarget) {
+			continue
+		}
+
 		const bounds = {
 			[direction.min]: currentTarget,
 			[direction.max]: target,
@@ -171,7 +175,92 @@ const pickContacts = (cell, world, edge = "right") => {
 	return cells
 }
 
-// TODO: Sleeping should be an controlled by an inherent 'target size' property of a cell
+// Abstract the logic of isolating contacts from moveDown
+const snipContacts = (cell, contacts, edge, reach) => {
+	const direction = DIRECTION[edge]
+	const opposite = direction.opposite
+	const adjacent = direction.adjacent
+	const oppositeEdge = opposite.name
+
+	const contactReach = Math.min(reach, ...contacts.map((contact) => contact.dimensions[adjacent.dimensionNumber]))
+	const sizeds = []
+	const excesses = []
+
+	for (const contact of contacts) {
+		const { bounds } = contact
+		const [sized, excess] = chop(contact, direction.adjacent.axis, [bounds[oppositeEdge] + contactReach])
+		sizeds.push(sized)
+		if (excess !== undefined) {
+			excesses.push(excess)
+		}
+	}
+
+	// If any sizedContacts overlap the cell, chop them off
+	const cellMin = cell.bounds[direction.min]
+	const cellMax = cell.bounds[direction.max]
+	const snips = []
+	for (let sized of sizeds) {
+		// If the contact overlaps with the min of the cell, chop it off
+		const sizedMin = sized.bounds[direction.min]
+		if (sizedMin < cellMin) {
+			const [snip, excess] = chop(sized, direction.axis, [cellMin])
+			sized = snip
+			excesses.push(excess)
+		}
+
+		// If the contact overlaps with the max of the cell, chop it off
+		const sizedMax = sized.bounds[direction.max]
+		if (sizedMax > cellMax) {
+			const [snip, excess] = chop(sized, direction.axis, [cellMax])
+			sized = snip
+			excesses.push(excess)
+		}
+
+		// Now we're left with a contact that fits perfectly inside the cell
+		snips.push(sized)
+	}
+
+	return [snips, excesses]
+}
+
+const pickSnips = (cell, world, edge, reach) => {
+	const contacts = pickContacts(cell, world, edge)
+	const [snips, excesses] = snipContacts(cell, contacts, edge, reach)
+	return { contacts, snips, excesses }
+}
+
+// Edge could technically be determined from the snips, but it's easier to pass them in
+const swapSnips = (cell, snips, edge) => {
+	const direction = DIRECTION[edge]
+	const adjacent = direction.adjacent
+	const opposite = direction.opposite
+	const oppositeEdge = opposite.name
+
+	const snipsSize = snips[0].dimensions[adjacent.dimensionNumber] //all snips should be the same size
+
+	snipsSize
+
+	const back = cell.bounds[oppositeEdge]
+	const middle = back + snipsSize
+	const front = snips[0].bounds[edge]
+
+	const newCell = reposition(cell, {
+		[edge]: front,
+		[oppositeEdge]: middle,
+	})
+
+	const newSnips = []
+	for (const snip of snips) {
+		const newSnip = reposition(snip, {
+			[oppositeEdge]: back,
+			[edge]: middle,
+		})
+		newSnips.push(newSnip)
+	}
+
+	return [newCell, ...newSnips]
+}
+
 // (currently it's done manually)
 
 // 'Sleeping' means merging with a nearby cell so that we don't have to

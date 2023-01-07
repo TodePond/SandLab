@@ -35,6 +35,37 @@ const Cell = class {
 		const width = this.bounds.right - this.bounds.left
 		const height = this.bounds.bottom - this.bounds.top
 		this.dimensions = [width, height]
+
+		// Check for rounding errors
+		const widthTest1 = this.bounds.left + width === this.bounds.right
+		const widthTest2 = this.bounds.right - width === this.bounds.left
+
+		const heightTest1 = this.bounds.top + height === this.bounds.bottom
+		const heightTest2 = this.bounds.bottom - height === this.bounds.top
+
+		if (!widthTest1) {
+			console.error("Cell bounds are not consistent with dimensions", this.bounds.left + width, this.bounds.right)
+		}
+
+		if (!widthTest2) {
+			console.error("Cell bounds are not consistent with dimensions", this.bounds.right - width, this.bounds.left)
+		}
+
+		if (!heightTest1) {
+			console.error(
+				"Cell bounds are not consistent with dimensions",
+				this.bounds.top + height,
+				this.bounds.bottom,
+			)
+		}
+
+		if (!heightTest2) {
+			console.error(
+				"Cell bounds are not consistent with dimensions",
+				this.bounds.bottom - height,
+				this.bounds.top,
+			)
+		}
 	}
 
 	clear(image) {
@@ -175,6 +206,7 @@ class World {
 			this.delete(cell)
 		}
 		for (const newCell of newCells) {
+			newCell.birth = shared.clock
 			this.add(newCell)
 		}
 		return newCells
