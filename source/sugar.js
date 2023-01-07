@@ -261,7 +261,35 @@ const swapSnips = (cell, snips, edge) => {
 	return [newCell, ...newSnips]
 }
 
-// (currently it's done manually)
+const defaultJudge = (cells, getTarget = () => 1.0) => {
+	const maxErrors = []
+	const sumErrors = []
+	const minErrors = []
+	const productErrors = []
+	for (const cell of cells) {
+		const target = getTarget(cell)
+
+		const dimensionErrorScale = cell.dimensions.map((v) => v / target)
+		const dimensionErrorDiff = dimensionErrorScale.map((v) => Math.abs(v - 1))
+
+		maxErrors.push(Math.max(...dimensionErrorDiff))
+		sumErrors.push(dimensionErrorDiff[0] + dimensionErrorDiff[1])
+		productErrors.push(dimensionErrorDiff[0] * dimensionErrorDiff[1])
+		minErrors.push(Math.min(...dimensionErrorDiff))
+	}
+
+	const scores = []
+
+	for (const errors of [maxErrors]) {
+		const sum = errors.reduce((a, b) => a + b, 0)
+		const average = sum / errors.length
+		const max = Math.max(...errors)
+		//scores.push(-average)
+		scores.push(-max)
+	}
+
+	return scores
+}
 
 // 'Sleeping' means merging with a nearby cell so that we don't have to
 // update or draw this cell every frame
@@ -274,41 +302,19 @@ const swapSnips = (cell, snips, edge) => {
 // 1. The cell is touching a cell that perfectly lines up with it
 // 2. The cell is touching a bigger cell that can be split into multiple cells that line up with it
 // 3. Probably more
-const tryToSleep = (
-	cell,
-	world,
-	{
-		edges = Object.keys(DIRECTION),
-		judge = [
-			(cells) => {
-				const areas = cells.map((cell) => cell.dimensions[0] * cell.dimensions[1])
-				return Math.max(...areas)
-			},
-		],
-		minSize = 0.0,
-		maxSize = 1.0,
-	} = {},
-) => {
+const tryToSleep = (cell, world, { edges = Object.keys(DIRECTION), judge = defaultJudge, target = () => 1.0 } = {}) => {
 	let winner = undefined
-	let highScores = judge.map(() => -Infinity)
+	let highScores = []
 
 	for (const edge of shuffleArray(edges)) {
-		const replacement = sleep(cell, world, edge, { judge })
+		const replacement = sleep(cell, world, edge)
 		const { oldCells, newCells } = replacement
 		if (newCells.length === 0) continue
 
-		const direction = DIRECTION[edge]
-		const { dimensionNumber } = direction
+		const newScores = judge(newCells, target)
+		const oldScores = judge(oldCells, target)
 
-		const [newCell] = newCells
-		const dimension = newCell.dimensions[dimensionNumber]
-		if (dimension < minSize) continue
-		if (dimension > maxSize) continue
-
-		const newScores = judge.map((j) => j(newCells))
-		const oldScores = judge.map((j) => j(oldCells))
-
-		if (newScores.every((v, i) => v >= oldScores[i]) && newScores.every((v, i) => v >= highScores[i])) {
+		if (scoresAreBetter(newScores, oldScores) && scoresAreBetter(newScores, highScores)) {
 			highScores = newScores
 			winner = replacement
 		}
@@ -320,6 +326,17 @@ const tryToSleep = (
 
 	const { oldCells, newCells } = winner
 	return world.replace(oldCells, newCells)
+}
+
+const scoresAreBetter = (a, b) => {
+	for (let i = 0; i < a.length; i++) {
+		if (b[i] === undefined) return true
+		if (a[i] === undefined) return false
+		if (a[i] === b[i]) continue
+		return a[i] > b[i]
+	}
+
+	return false
 }
 
 const sleep = (cell, world, edge) => {

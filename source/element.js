@@ -3,7 +3,7 @@ const ELEMENTS = new Map()
 const pointer = getPointer()
 const POINTER_RADIUS = 0.03
 const POINTER_FADE_RADIUS = 0.1
-const POINTER_CELL_SIZE = 1 / 32 //1 / 360
+const POINTER_CELL_SIZE = 1 / 128 //1 / 256
 let AIR_TARGET = 1
 const getPointerAirTarget = (cell) => {
 	if (pointer.position.x === undefined) {
@@ -36,23 +36,23 @@ ELEMENTS.set(GREY.splash, {
 		const dimensionErrorScale = cell.dimensions.map((v) => v / target)
 
 		// Function that finds the error of all cells from their target size
-		const judge = [
-			(cells) => {
-				let errors = []
-				for (const cell of cells) {
-					const target = getPointerAirTarget(cell)
-					const dimensionErrorScale = cell.dimensions.map((v) => v / target)
-					const dimensionErrorDiff = dimensionErrorScale.map((v) => Math.abs(v - 1))
-					const errorDiff = Math.max(dimensionErrorDiff[0], dimensionErrorDiff[1])
-					errors.push(errorDiff)
-				}
+		const judge = (cells) => {
+			let errors = []
+			for (const cell of cells) {
+				const target = getPointerAirTarget(cell)
+				const dimensionErrorScale = cell.dimensions.map((v) => v / target)
+				const dimensionErrorDiff = dimensionErrorScale.map((v) => Math.abs(v - 1))
+				const errorDiff = Math.max(dimensionErrorDiff[0], dimensionErrorDiff[1])
+				errors.push(errorDiff)
+			}
 
-				const sum = errors.reduce((a, b) => a + b, 0)
-				const average = sum / errors.length
-				const score = -average
-				return score
-			},
-		]
+			const sum = errors.reduce((a, b) => a + b, 0)
+			const average = sum / errors.length
+			const score = -average
+			return score
+		}
+
+		const compare = (a, b) => a >= b
 
 		// If a cell is too big, try to split it
 		const veryTooWide = dimensionErrorScale[0] >= 2.0
@@ -63,36 +63,29 @@ ELEMENTS.set(GREY.splash, {
 			const splitCells = split(cell, [columns, rows])
 
 			// Judge the split cells and use them if they're better
-			const splitScores = judge.map((j) => j(splitCells))
-			const originalScores = judge.map((j) => j([cell]))
-			if (splitScores.every((s, i) => s >= originalScores[i])) {
+			const splitScores = judge(splitCells, () => target)
+			const originalScores = judge([cell], () => target)
+			if (compare(splitScores, originalScores)) {
 				return world.replace([cell], splitCells)
 			}
 		}
-
-		/*
-		judge[1] = (cells) => {
-			const areas = cells.map((cell) => cell.dimensions[0] * cell.dimensions[1])
-			return Math.max(...areas)
-		}
-		*/
 
 		// If a cell is too small, try to sleep it
 		const tooThin = dimensionErrorScale[1] < 1.0
 		const tooShort = dimensionErrorScale[0] < 1.0
 		if (tooThin && tooShort) {
-			return tryToSleep(cell, world, { judge })
+			return tryToSleep(cell, world, { judge, compare })
 		}
 
 		if (tooThin) {
-			const result = tryToSleep(cell, world, { edges: ["top", "bottom"], judge })
+			const result = tryToSleep(cell, world, { edges: ["top", "bottom"], judge, compare })
 			if (result.length > 0) {
 				return result
 			}
 		}
 
 		if (tooShort) {
-			const result = tryToSleep(cell, world, { edges: ["left", "right"], judge })
+			const result = tryToSleep(cell, world, { edges: ["left", "right"], judge, compare })
 			if (result.length > 0) {
 				return result
 			}
@@ -114,7 +107,7 @@ ELEMENTS.set(YELLOW.splash, {
 		// If there isn't solid below, fall
 		if (below.snips.every((c) => !SOLID.has(c.colour))) {
 			const movedCells = swapSnips(cell, below.snips, "bottom")
-			return world.replace([cell, ...below.contacts], [cell, ...below.excesses, ...below.snips])
+			//return world.replace([cell, ...below.contacts], [cell, ...below.excesses, ...below.snips])
 			//return world.replace([cell, ...below.contacts], [...below.excesses, ...movedCells])
 		}
 
