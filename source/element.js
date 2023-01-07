@@ -1,10 +1,12 @@
 const ELEMENTS = new Map()
 
+const FALL_SPEED = 1 / 128
+
 const pointer = getPointer()
-const POINTER_RADIUS = 0.03
-const POINTER_FADE_RADIUS = 0.1
-const POINTER_CELL_SIZE = 1 / 128 //1 / 256
-let AIR_TARGET = 1
+const POINTER_RADIUS = 0.0 //0.03
+const POINTER_FADE_RADIUS = 0.0 //0.1
+const POINTER_CELL_SIZE = 1 / 32 //1 / 256
+let AIR_TARGET = 1 / 32
 const getPointerAirTarget = (cell) => {
 	if (pointer.position.x === undefined) {
 		return AIR_TARGET
@@ -105,7 +107,7 @@ ELEMENTS.set(GREY.splash, {
 ELEMENTS.set(YELLOW.splash, {
 	name: "Sand",
 	update: (cell, world) => {
-		const below = pickSnips(cell, world, "bottom", 1 / 256)
+		const below = pickSnips(cell, world, "bottom", FALL_SPEED)
 
 		if (below.snips.length === 0) {
 			return tryToSleep(cell, world)
@@ -115,7 +117,7 @@ ELEMENTS.set(YELLOW.splash, {
 		if (below.snips.every((c) => !SOLID.has(c.colour))) {
 			const movedCells = swapSnips(cell, below.snips, "bottom")
 			//return world.replace([cell, ...below.contacts], [cell, ...below.excesses, ...below.snips])
-			//return world.replace([cell, ...below.contacts], [...below.excesses, ...movedCells])
+			return world.replace([cell, ...below.contacts], [...below.excesses, ...movedCells])
 		}
 
 		return tryToSleep(cell, world)

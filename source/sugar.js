@@ -203,7 +203,7 @@ const snipContacts = (cell, contacts, edge, reach) => {
 		// If the contact overlaps with the min of the cell, chop it off
 		const sizedMin = sized.bounds[direction.min]
 		if (sizedMin < cellMin) {
-			const [snip, excess] = chop(sized, direction.axis, [cellMin])
+			const [excess, snip] = chop(sized, direction.axis, [cellMin])
 			sized = snip
 			excesses.push(excess)
 		}

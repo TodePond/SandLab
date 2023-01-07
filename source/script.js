@@ -356,6 +356,10 @@ stage.tick = (context) => {
 	const { canvas } = context
 	const { image, camera } = global
 	const [x, y] = camera.get([0, 0])
+
+	// debug: redraw entire world
+	//global.world.draw(image)
+
 	context.clearRect(0, 0, canvas.width, canvas.height)
 	context.putImageData(image, x, y)
 }
