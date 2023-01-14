@@ -10,8 +10,11 @@ const split = (cell, [rows, columns]) => {
 	const splitHeight = height / rows
 
 	const cells = []
-	for (let i = rows - 1; i >= 0; i--) {
-		for (let j = columns - 1; j >= 0; j--) {
+
+	for (let i = 0; i < rows; i++) {
+		for (let j = 0; j < columns; j++) {
+			//for (let i = rows - 1; i >= 0; i--) {
+			//	for (let j = columns - 1; j >= 0; j--) {
 			const splitCell = new Cell({
 				bounds: {
 					left: left + j * splitWidth,
@@ -182,15 +185,15 @@ const snipContacts = (cell, contacts, edge, reach) => {
 	const adjacent = direction.adjacent
 	const oppositeEdge = opposite.name
 
-	const minMax = direction.sign === 1 ? Math.max : Math.min
+	const contactReach = Math.min(reach, ...contacts.map((contact) => contact.dimensions[adjacent.dimensionNumber]))
+	const signedReach = contactReach * direction.sign
 
-	const contactReach = minMax(reach, ...contacts.map((contact) => contact.dimensions[adjacent.dimensionNumber]))
 	const sizeds = []
 	const excesses = []
 
 	for (const contact of contacts) {
 		const { bounds } = contact
-		const [sized, excess] = chop(contact, direction.adjacent.axis, [bounds[oppositeEdge] + contactReach])
+		const [sized, excess] = chop(contact, direction.adjacent.axis, [bounds[oppositeEdge] + signedReach])
 		sizeds.push(sized)
 		if (excess !== undefined) {
 			excesses.push(excess)
@@ -245,15 +248,15 @@ const swapSnips = (cell, snips, edge) => {
 	const front = snips[0].bounds[edge]
 
 	const newCell = reposition(cell, {
-		[edge]: front,
-		[oppositeEdge]: middle,
+		[edge]: direction.sign === 1 ? front : front,
+		[oppositeEdge]: direction.sign === 1 ? middle : middle,
 	})
 
 	const newSnips = []
 	for (const snip of snips) {
 		const newSnip = reposition(snip, {
-			[oppositeEdge]: back,
-			[edge]: middle,
+			[oppositeEdge]: direction.sign === 1 ? back : back,
+			[edge]: direction.sign === 1 ? middle : middle,
 		})
 		newSnips.push(newSnip)
 	}
