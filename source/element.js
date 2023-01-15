@@ -6,7 +6,7 @@ const pointer = getPointer()
 const POINTER_RADIUS = 0.0 //0.03
 const POINTER_FADE_RADIUS = 0.0 //0.1
 const POINTER_CELL_SIZE = 1 / 128 //1 / 256
-let AIR_TARGET = 1 / 16
+let AIR_TARGET = 1 / 4
 const getPointerAirTarget = (cell) => {
 	if (pointer.position.x === undefined) {
 		return AIR_TARGET
