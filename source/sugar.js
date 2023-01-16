@@ -194,6 +194,7 @@ const snipContacts = (cell, contacts, edge, reach) => {
 	for (const contact of contacts) {
 		const { bounds } = contact
 		const [a, b] = chop(contact, direction.adjacent.axis, [bounds[oppositeEdge] + signedReach])
+		//TODO
 		const [sized, excess] = [a, b]
 		sizeds.push(sized)
 		if (excess !== undefined) {
