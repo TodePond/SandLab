@@ -3,10 +3,10 @@ const ELEMENTS = new Map()
 const FALL_SPEED = 1 / 256
 
 const pointer = getPointer()
-const POINTER_RADIUS = 0.0 //0.03
-const POINTER_FADE_RADIUS = 0.0 //0.1
-const POINTER_CELL_SIZE = 1 / 128 //1 / 256
-let AIR_TARGET = 1 / 4
+const POINTER_RADIUS = 0.03 //0.03
+const POINTER_FADE_RADIUS = 0.1 //0.1
+const POINTER_CELL_SIZE = 1 / 512 //1 / 256
+let AIR_TARGET = 1 / 1
 const getPointerAirTarget = (cell) => {
 	if (pointer.position.x === undefined) {
 		return AIR_TARGET
@@ -55,6 +55,11 @@ ELEMENTS.set(GREY.splash, {
 			return score
 		}
 
+		const filter = (cell) => {
+			const age = shared.clock - cell.birth
+			return age > 5
+		}
+
 		const compareSplit = (a, b = -Infinity) => {
 			return a >= b
 		}
@@ -83,18 +88,18 @@ ELEMENTS.set(GREY.splash, {
 		const tooThin = dimensionErrorScale[1] < 1.0
 		const tooShort = dimensionErrorScale[0] < 1.0
 		if (tooThin && tooShort) {
-			return tryToSleep(cell, world, { judge, compare })
+			return tryToSleep(cell, world, { judge, compare, filter })
 		}
 
 		if (tooThin) {
-			const result = tryToSleep(cell, world, { edges: ["top", "bottom"], judge, compare })
+			const result = tryToSleep(cell, world, { edges: ["top", "bottom"], judge, compare, filter })
 			if (result.length > 0) {
 				return result
 			}
 		}
 
 		if (tooShort) {
-			const result = tryToSleep(cell, world, { edges: ["left", "right"], judge, compare })
+			const result = tryToSleep(cell, world, { edges: ["left", "right"], judge, compare, filter })
 			if (result.length > 0) {
 				return result
 			}

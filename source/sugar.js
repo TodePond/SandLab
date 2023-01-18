@@ -194,8 +194,7 @@ const snipContacts = (cell, contacts, edge, reach) => {
 	for (const contact of contacts) {
 		const { bounds } = contact
 		const [a, b] = chop(contact, direction.adjacent.axis, [bounds[oppositeEdge] + signedReach])
-		//TODO
-		const [sized, excess] = [a, b]
+		const [sized, excess] = direction.sign === 1 ? [a, b] : [b, a]
 		sizeds.push(sized)
 		if (excess !== undefined) {
 			excesses.push(excess)
@@ -282,6 +281,8 @@ const defaultJudge = (cells) => {
 
 const defaultCompare = (a, b = -Infinity) => a > b
 
+const defaultFilter = (cell) => true
+
 // 'Sleeping' means merging with a nearby cell so that we don't have to
 // update or draw this cell every frame
 //
@@ -296,13 +297,13 @@ const defaultCompare = (a, b = -Infinity) => a > b
 const tryToSleep = (
 	cell,
 	world,
-	{ edges = Object.keys(DIRECTION), judge = defaultJudge, compare = defaultCompare } = {},
+	{ edges = Object.keys(DIRECTION), judge = defaultJudge, compare = defaultCompare, filter = defaultFilter } = {},
 ) => {
 	let winner = undefined
 	let highScore = undefined
 
 	for (const edge of shuffleArray(edges)) {
-		const replacement = sleep(cell, world, edge)
+		const replacement = sleep(cell, world, edge, filter)
 		const { oldCells, newCells } = replacement
 		if (newCells.length === 0) continue
 
@@ -336,13 +337,13 @@ const scoresAreBetter = (a, b) => {
 	return false
 }
 
-const sleep = (cell, world, edge) => {
+const sleep = (cell, world, edge, filter) => {
 	const failure = { oldCells: [], newCells: [] }
 
 	const direction = DIRECTION[edge]
 
 	// Get all the cells that are touching this cell (in a randomly ordered array)
-	const contacts = pickContacts(cell, world, edge)
+	const contacts = pickContacts(cell, world, edge).filter(filter)
 
 	// If there are no contacts, we can't merge with anything
 	if (contacts.length === 0) {

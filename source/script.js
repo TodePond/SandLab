@@ -91,12 +91,12 @@ const Cell = class {
 
 		// Set the image data of every pixel in the cell
 		// The border is 1 pixel thick and void coloured
-		let BORDER_WIDTH = Math.min(4, Math.min(drawnWidth, drawnHeight) / 10)
+		let BORDER_WIDTH = Math.min(1, Math.min(drawnWidth, drawnHeight) / 10)
 		if (BORDER_WIDTH < 1) {
 			if (BORDER_WIDTH > 0.4) {
 				BORDER_WIDTH = 1
 			} else {
-				BORDER_WIDTH = 0
+				BORDER_WIDTH = 1
 			}
 		}
 
