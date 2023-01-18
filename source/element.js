@@ -1,12 +1,10 @@
 const ELEMENTS = new Map()
 
-const FALL_SPEED = 1 / 256
-
 const pointer = getPointer()
 const POINTER_RADIUS = 0.03 //0.03
-const POINTER_FADE_RADIUS = 0.1 //0.1
-const POINTER_CELL_SIZE = 1 / 512 //1 / 256
-let AIR_TARGET = 1 / 1
+const POINTER_FADE_RADIUS = 0.0 //0.1
+const POINTER_CELL_SIZE = 1 / 64 //1 / 256
+let AIR_TARGET = 1 / 64
 const getPointerAirTarget = (cell) => {
 	if (pointer.position.x === undefined) {
 		return AIR_TARGET
@@ -109,10 +107,12 @@ ELEMENTS.set(GREY.splash, {
 	},
 })
 
+const FALL_SPEED = 1 / 256
+
 ELEMENTS.set(YELLOW.splash, {
 	name: "Sand",
 	update: (cell, world) => {
-		const edge = "bottom"
+		const edge = "top"
 		const below = pickSnips(cell, world, edge, FALL_SPEED)
 
 		if (below.snips.length === 0) {

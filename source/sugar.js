@@ -193,11 +193,22 @@ const snipContacts = (cell, contacts, edge, reach) => {
 
 	for (const contact of contacts) {
 		const { bounds } = contact
-		const [a, b] = chop(contact, direction.adjacent.axis, [bounds[oppositeEdge] + signedReach])
-		const [sized, excess] = direction.sign === 1 ? [a, b] : [b, a]
-		sizeds.push(sized)
-		if (excess !== undefined) {
-			excesses.push(excess)
+		const chops = chop(contact, direction.adjacent.axis, [bounds[oppositeEdge] + signedReach])
+
+		if (direction.sign === 1) {
+			const [sized, excess] = chops
+			sizeds.push(sized)
+			if (excess !== undefined) {
+				excesses.push(excess)
+			}
+		} else {
+			const [head, tail] = chops
+			if (tail !== undefined) {
+				sizeds.push(tail)
+				excesses.push(head)
+			} else {
+				sizeds.push(head)
+			}
 		}
 	}
 
