@@ -1,10 +1,24 @@
 const ELEMENTS = new Map()
 
 const pointer = getPointer()
+
+on(
+	"keydown",
+	(event) => {
+		for (const [splash, element] of ELEMENTS) {
+			if (element.key.includes(event.key)) {
+				shared.brush.colour = new Splash(splash)
+				return
+			}
+		}
+	},
+	{ passive: false },
+)
+
 const POINTER_RADIUS = 0.03 //0.03
-const POINTER_FADE_RADIUS = 0.0 //0.1
-const POINTER_CELL_SIZE = 1 / 64 //1 / 256
-let AIR_TARGET = 1 / 64
+const POINTER_FADE_RADIUS = 0.1 //0.1
+const POINTER_CELL_SIZE = 1 / 128 //1 / 256
+let AIR_TARGET = 1 / 1
 const getPointerAirTarget = (cell) => {
 	if (pointer.position.x === undefined) {
 		return AIR_TARGET
@@ -29,8 +43,10 @@ const getPointerAirTarget = (cell) => {
 	AIR_TARGET = target
 })*/
 
-ELEMENTS.set(GREY.splash, {
+const AIR_SPLASH = GREY.splash
+ELEMENTS.set(AIR_SPLASH, {
 	name: "Air",
+	key: ["a", "1"],
 	update: (cell, world) => {
 		const target = getPointerAirTarget(cell)
 		const dimensionErrorScale = cell.dimensions.map((v) => v / target)
@@ -111,6 +127,7 @@ const FALL_SPEED = 1 / 256
 
 ELEMENTS.set(YELLOW.splash, {
 	name: "Sand",
+	key: ["s", "2"],
 	update: (cell, world) => {
 		const edge = "top"
 		const below = pickSnips(cell, world, edge, FALL_SPEED)
@@ -138,32 +155,27 @@ ELEMENTS.set(YELLOW.splash, {
 
 ELEMENTS.set(ORANGE.splash, {
 	name: "Wood",
+	key: ["w", "4"],
 })
 
 ELEMENTS.set(RED.splash, {
 	name: "Fire",
+	key: ["f", "5"],
 })
 
 ELEMENTS.set(GREEN.splash, {
 	name: "Plant",
+	key: ["p", "7"],
 })
 
 ELEMENTS.set(BLUE.splash, {
 	name: "Water",
+	key: ["w", "3"],
 })
 
 ELEMENTS.set(SILVER.splash, {
 	name: "Stone",
-})
-
-ELEMENTS.set(900, {
-	name: "World",
-	update: (cell, world, image) => {
-		const splitCells = split(cell, [2, 2])
-		world.replace(cell, splitCells)
-		cell.clear(image)
-		return splitCells
-	},
+	key: ["t", "6"],
 })
 
 const SOLID = new Set([YELLOW, ORANGE, GREEN, SILVER])

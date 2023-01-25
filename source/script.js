@@ -3,7 +3,12 @@
 //========//
 const shared = {
 	clock: 0,
+	brush: {
+		colour: YELLOW,
+	},
 }
+
+//------ NO SHARED CREATED BELOW THIS LINE ------//
 
 //======//
 // CELL //
@@ -315,7 +320,7 @@ AXIS.y.opposite = AXIS.y
 AXIS.x.adjacent = AXIS.y
 AXIS.y.adjacent = AXIS.x
 
-//------ NO GLOBALS ABOVE THIS LINE ------//
+//------ NO GLOBALS USED ABOVE THIS LINE ------//
 
 //========//
 // GLOBAL //
@@ -324,9 +329,6 @@ const global = {
 	world: new World({ colour: GREY }),
 	camera: new View(),
 	image: undefined,
-	brush: {
-		colour: YELLOW,
-	},
 }
 
 //===========//
@@ -429,9 +431,10 @@ stage.update = (context) => {
 	// Place cells with the pointer
 	const pointer = getPointer()
 	if (pointer.down) {
-		const colour = global.brush.colour
+		const colour = shared.brush.colour
 		const cell = world.pick(camera.cast(scale(pointer.position, devicePixelRatio)))
-		if (cell) {
+		const canWrite = cell && (colour === AIR_SPLASH || cell.colour.splash === AIR_SPLASH)
+		if (canWrite) {
 			const newCell = recolour(cell, colour)
 			world.replace([cell], [newCell])
 			cell.clear(image)
@@ -441,3 +444,4 @@ stage.update = (context) => {
 }
 
 Object.assign(window, global)
+Object.assign(window, shared)
