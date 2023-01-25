@@ -363,8 +363,8 @@ const equals = (a, b) => {
 }
 
 // Returns a list of replacements that should be done
-const move = (cell, world, direction, speed) => {
-	const edge = direction
+const move = (cell, world, edge, speed) => {
+	const direction = DIRECTION[edge]
 	const below = pickSnips(cell, world, edge, speed)
 
 	if (below.snips.length === 0) {
@@ -386,8 +386,13 @@ const move = (cell, world, direction, speed) => {
 	const gaps = below.snips.filter((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)
 	if (gaps.length > 0) {
 		// Cut myself up into gap-sized pieces
-		const targets = gaps.map((v) => [v.bounds.left, v.bounds.right]).flat()
-		const pieces = chop(water, "y", targets)
+		const targets = gaps.map((v) => [v.bounds[direction.min], v.bounds[direction.max]]).flat()
+		const pieces = chop(water, direction.axis, targets)
+		for (const piece of pieces) {
+			if (piece.dimensions[direction.dimensionNumber] < MIN_SIZE) {
+				return []
+			}
+		}
 		return [[water], [...pieces]]
 	}
 

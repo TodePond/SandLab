@@ -16,6 +16,7 @@ on(
 )
 
 const FALL_SPEED = 1 / 64
+const MIN_SIZE = 1 / 128
 
 const POINTER_RADIUS = 0.03 //0.03
 const POINTER_FADE_RADIUS = 0.1 //0.1
@@ -58,6 +59,11 @@ ELEMENTS.set(AIR_SPLASH, {
 			let errors = []
 
 			for (const cell of cells) {
+				if (cell.dimensions[0] < MIN_SIZE || cell.dimensions[1] < MIN_SIZE) {
+					//errors.push(Infinity)
+					//continue
+				}
+
 				const target = getPointerAirTarget(cell)
 				const dimensionErrorScale = cell.dimensions.map((v) => v / target)
 				const dimensionErrorDiff = dimensionErrorScale.map((v) => Math.abs(1 - v))
@@ -172,7 +178,18 @@ ELEMENTS.set(BLUE.splash, {
 			return world.replace(...movements)
 		}
 
-		return tryToSleep(cell, world)
+		const slideDirection = randomFrom(["left", "right"])
+		const slides = move(cell, world, slideDirection, FALL_SPEED)
+		if (slides.length > 0) {
+			return world.replace(...slides)
+		}
+
+		const sleeps = tryToSleep(cell, world)
+		if (sleeps.length > 0) {
+			return sleeps
+		}
+
+		return []
 	},
 })
 
