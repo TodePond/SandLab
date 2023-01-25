@@ -7,7 +7,7 @@ on(
 	(event) => {
 		for (const [splash, element] of ELEMENTS) {
 			if (element.key.includes(event.key)) {
-				shared.brush.colour = new Splash(splash)
+				shared.brush.colour = new Splash(splash).d
 				return
 			}
 		}
@@ -15,9 +15,11 @@ on(
 	{ passive: false },
 )
 
+const FALL_SPEED = 1 / 64
+
 const POINTER_RADIUS = 0.03 //0.03
 const POINTER_FADE_RADIUS = 0.1 //0.1
-const POINTER_CELL_SIZE = 1 / 128 //1 / 256
+const POINTER_CELL_SIZE = 1 / 32 //1 / 256
 let AIR_TARGET = 1 / 1
 const getPointerAirTarget = (cell) => {
 	if (pointer.position.x === undefined) {
@@ -123,8 +125,6 @@ ELEMENTS.set(AIR_SPLASH, {
 	},
 })
 
-const FALL_SPEED = 1 / 256
-
 ELEMENTS.set(YELLOW.splash, {
 	name: "Sand",
 	key: ["s", "2"],
@@ -137,7 +137,7 @@ ELEMENTS.set(YELLOW.splash, {
 		}
 
 		// If there isn't solid below, fall
-		if (below.snips.every((c) => !SOLID.has(c.colour))) {
+		if (below.snips.every((c) => !SOLID.has(c.colour.splash))) {
 			//const above = pickSnips(cell, world, "top", FALL_SPEED)
 			let sand = cell
 			//if (above.snips.length > 0 && above.snips.every((v) => v.colour === YELLOW)) {
@@ -176,6 +176,23 @@ ELEMENTS.set(BLUE.splash, {
 ELEMENTS.set(SILVER.splash, {
 	name: "Stone",
 	key: ["t", "6"],
+	update: (cell, world) => {
+		const edge = "bottom"
+		const below = pickSnips(cell, world, edge, FALL_SPEED)
+
+		if (below.snips.length === 0) {
+			return tryToSleep(cell, world)
+		}
+
+		// If there isn't solid below, fall
+		if (below.snips.every((c) => !SOLID.has(c.colour.splash))) {
+			let sand = cell
+			const movedCells = swapSnips(sand, below.snips, edge)
+			return world.replace([cell, ...below.contacts], [...below.excesses, ...movedCells])
+		}
+
+		return tryToSleep(cell, world)
+	},
 })
 
-const SOLID = new Set([YELLOW, ORANGE, GREEN, SILVER])
+const SOLID = new Set([YELLOW.splash, ORANGE.splash, GREEN.splash, SILVER.splash])

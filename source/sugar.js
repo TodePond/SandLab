@@ -348,6 +348,15 @@ const scoresAreBetter = (a, b) => {
 	return false
 }
 
+const equals = (a, b) => {
+	if (a === b) return true
+	if (a.length !== b.length) return false
+	for (let i = 0; i < a.length; i++) {
+		if (a[i] !== b[i]) return false
+	}
+	return true
+}
+
 const sleep = (cell, world, edge, filter) => {
 	const failure = { oldCells: [], newCells: [] }
 
@@ -370,7 +379,7 @@ const sleep = (cell, world, edge, filter) => {
 	// If we find a cell that we can merge with, we'll merge with it and return true
 	for (const candidate of candidates) {
 		// If the candidate is a different colour, we can't merge with it
-		if (candidate.colour.splash !== cell.colour.splash) {
+		if (!equals(candidate.colour, cell.colour)) {
 			continue
 		}
 

@@ -4,7 +4,7 @@
 const shared = {
 	clock: 0,
 	brush: {
-		colour: YELLOW,
+		colour: BLUE,
 	},
 }
 
@@ -433,7 +433,7 @@ stage.update = (context) => {
 	if (pointer.down) {
 		const colour = shared.brush.colour
 		const cell = world.pick(camera.cast(scale(pointer.position, devicePixelRatio)))
-		const canWrite = cell && (colour === AIR_SPLASH || cell.colour.splash === AIR_SPLASH)
+		const canWrite = cell && (colour.splash === AIR_SPLASH || cell.colour.splash === AIR_SPLASH)
 		if (canWrite) {
 			const newCell = recolour(cell, colour)
 			world.replace([cell], [newCell])
