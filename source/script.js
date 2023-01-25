@@ -4,7 +4,7 @@
 const shared = {
 	clock: 0,
 	brush: {
-		colour: BLUE,
+		colour: YELLOW,
 	},
 }
 

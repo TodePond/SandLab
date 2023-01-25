@@ -41,7 +41,12 @@ const chop = (cell, axis, targets) => {
 
 	const direction = AXIS[axis]
 
-	targets = targets.sort((a, b) => a - b)
+	targets = targets
+		.sort((a, b) => a - b)
+		.filter((v, i) => {
+			const previous = targets[i - 1]
+			return previous === undefined || v !== previous
+		})
 
 	const cells = []
 	let currentTarget = cell.bounds[direction.min]
@@ -181,7 +186,7 @@ const pickContacts = (cell, world, edge = "right") => {
 }
 
 // Abstract the logic of isolating contacts from moveDown
-const snipContacts = (cell, contacts, edge, reach) => {
+const snipContacts = (cell, contacts, edge, reach = Infinity) => {
 	const direction = DIRECTION[edge]
 	const opposite = direction.opposite
 	const adjacent = direction.adjacent
@@ -239,13 +244,13 @@ const snipContacts = (cell, contacts, edge, reach) => {
 		snips.push(sized)
 	}
 
-	return [snips, excesses]
+	return [snips, excesses, contactReach]
 }
 
 const pickSnips = (cell, world, edge, reach) => {
 	const contacts = pickContacts(cell, world, edge)
-	const [snips, excesses] = snipContacts(cell, contacts, edge, reach)
-	return { contacts, snips, excesses }
+	const [snips, excesses, maxReach] = snipContacts(cell, contacts, edge, reach)
+	return { contacts, snips, excesses, reach: maxReach }
 }
 
 // Edge could technically be determined from the snips, but it's easier to pass them in
@@ -363,7 +368,7 @@ const equals = (a, b) => {
 }
 
 // Returns a list of replacements that should be done
-const move = (cell, world, edge, speed) => {
+const move = (cell, world, edge, speed, minSize = 0) => {
 	const direction = DIRECTION[edge]
 	const below = pickSnips(cell, world, edge, speed)
 
@@ -389,10 +394,14 @@ const move = (cell, world, edge, speed) => {
 		const targets = gaps.map((v) => [v.bounds[direction.min], v.bounds[direction.max]]).flat()
 		const pieces = chop(water, direction.axis, targets)
 		for (const piece of pieces) {
-			if (piece.dimensions[direction.dimensionNumber] < MIN_SIZE) {
+			if (
+				water.dimensions[direction.dimensionNumber] >= minSize &&
+				piece.dimensions[direction.dimensionNumber] <= minSize
+			) {
 				return []
 			}
 		}
+		3
 		return [[water], [...pieces]]
 	}
 
