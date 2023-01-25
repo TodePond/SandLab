@@ -362,6 +362,38 @@ const equals = (a, b) => {
 	return true
 }
 
+// Returns a list of replacements that should be done
+const move = (cell, world, direction, speed) => {
+	const edge = direction
+	const below = pickSnips(cell, world, edge, speed)
+
+	if (below.snips.length === 0) {
+		return []
+	}
+
+	const water = cell
+
+	// If there isn't solid below, fall
+	if (below.snips.every((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)) {
+		const movedCells = swapSnips(water, below.snips, edge)
+		return [
+			[cell, ...below.contacts],
+			[...below.excesses, ...movedCells],
+		]
+	}
+
+	// If there are some gaps below, fall into those bits
+	const gaps = below.snips.filter((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)
+	if (gaps.length > 0) {
+		// Cut myself up into gap-sized pieces
+		const targets = gaps.map((v) => [v.bounds.left, v.bounds.right]).flat()
+		const pieces = chop(water, "y", targets)
+		return [[water], [...pieces]]
+	}
+
+	return []
+}
+
 const sleep = (cell, world, edge, filter) => {
 	const failure = { oldCells: [], newCells: [] }
 

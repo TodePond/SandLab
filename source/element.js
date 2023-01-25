@@ -167,28 +167,9 @@ ELEMENTS.set(BLUE.splash, {
 	name: "Water",
 	key: ["w", "3"],
 	update: (cell, world) => {
-		const edge = "bottom"
-		const below = pickSnips(cell, world, edge, FALL_SPEED)
-
-		if (below.snips.length === 0) {
-			return tryToSleep(cell, world)
-		}
-
-		const water = cell
-
-		// If there isn't solid below, fall
-		if (below.snips.every((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)) {
-			const movedCells = swapSnips(water, below.snips, edge)
-			return world.replace([cell, ...below.contacts], [...below.excesses, ...movedCells])
-		}
-
-		// If there are some gaps below, fall into those bits
-		const gaps = below.snips.filter((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)
-		if (gaps.length > 0) {
-			// Cut myself up into gap-sized pieces
-			const targets = gaps.map((v) => [v.bounds.left, v.bounds.right]).flat()
-			const pieces = chop(water, "y", targets)
-			return world.replace([water], [...pieces])
+		const movements = move(cell, world, "bottom", FALL_SPEED)
+		if (movements.length > 0) {
+			return world.replace(...movements)
 		}
 
 		return tryToSleep(cell, world)
@@ -199,28 +180,9 @@ ELEMENTS.set(SILVER.splash, {
 	name: "Stone",
 	key: ["t", "6"],
 	update: (cell, world) => {
-		const edge = "bottom"
-		const below = pickSnips(cell, world, edge, FALL_SPEED)
-
-		if (below.snips.length === 0) {
-			return tryToSleep(cell, world)
-		}
-
-		const water = cell
-
-		// If there isn't solid below, fall
-		if (below.snips.every((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)) {
-			const movedCells = swapSnips(water, below.snips, edge)
-			return world.replace([cell, ...below.contacts], [...below.excesses, ...movedCells])
-		}
-
-		// If there are some gaps below, fall into those bits
-		const gaps = below.snips.filter((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)
-		if (gaps.length > 0) {
-			// Cut myself up into gap-sized pieces
-			const targets = gaps.map((v) => [v.bounds.left, v.bounds.right]).flat()
-			const pieces = chop(water, "y", targets)
-			return world.replace([water], [...pieces])
+		const movements = move(cell, world, "bottom", FALL_SPEED)
+		if (movements.length > 0) {
+			return world.replace(...movements)
 		}
 
 		return tryToSleep(cell, world)
