@@ -241,9 +241,9 @@ const getSplashDigits = (splash) => {
 
 const mutateSplash = (splash) => {
 	const digits = getSplashDigits(splash)
-	digits[0] = clamp(digits[0] + randomFrom([-2, -1]), 0, 9)
-	digits[1] = clamp(digits[1] + randomFrom([-2, -1]), 0, 9)
-	digits[2] = clamp(digits[2] + randomFrom([-2, -1]), 0, 9)
+	digits[0] = clamp(digits[0] + randomFrom([0, -1, -1]), 0, 9)
+	digits[1] = clamp(digits[1] + randomFrom([-1, 0, 1]), 0, 9)
+	digits[2] = clamp(digits[2] + randomFrom([-1, 0, 1]), 0, 9)
 	return parseInt(digits.join(""))
 }
 
@@ -390,8 +390,9 @@ stage.update = (context) => {
 				}
 			}
 			continue
-		}
+		}*/
 
+		/*
 		if (cell.dimensions[0] > 0.002 && cell.dimensions[1] > 0.002 && maybe(0.05)) {
 			const splitCells = split(cell, [2, 2])
 			world.replace([cell], splitCells)
@@ -402,13 +403,13 @@ stage.update = (context) => {
 				splitCell.draw(image)
 			}
 		} else if (cell.dimensions[0] <= 0.002 || cell.dimensions[1] <= 0.002) {
-			const splash = mutateSplash(cell.colour.splash)
-			const newCell = recolour(cell, new Splash(splash))
-			world.replace([cell], [newCell])
-			newCell.draw(image)
+			//const splash = mutateSplash(cell.colour.splash)
+			//const newCell = recolour(cell, new Splash(splash))
+			//world.replace([cell], [newCell])
+			//newCell.draw(image)
 		}
-
-		continue*/
+		continue
+		*/
 
 		if (cell.birth === shared.clock) {
 			continue

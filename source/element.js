@@ -18,10 +18,10 @@ on(
 const FALL_SPEED = 1 / 128
 const MIN_SIZE = 1 / 256
 
-const POINTER_RADIUS = 0.03 //0.03
-const POINTER_FADE_RADIUS = 0.1 //0.1
-const POINTER_CELL_SIZE = 1 / 8 //1 / 256
-let AIR_TARGET = 1 / 1
+const POINTER_RADIUS = 0.0 //0.03
+const POINTER_FADE_RADIUS = 0.0 //0.1
+const POINTER_CELL_SIZE = 1 / 4 //1 / 256
+let AIR_TARGET = 1 / 32
 const getPointerAirTarget = (cell) => {
 	if (pointer.position.x === undefined) {
 		return AIR_TARGET
@@ -156,6 +156,9 @@ ELEMENTS.set(YELLOW.splash, {
 ELEMENTS.set(ORANGE.splash, {
 	name: "Wood",
 	key: ["w", "4"],
+	update: (cell, world) => {
+		return tryToSleep(cell, world)
+	},
 })
 
 ELEMENTS.set(RED.splash, {

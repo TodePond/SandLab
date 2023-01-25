@@ -301,7 +301,7 @@ const defaultCompare = (a, b = -Infinity) => a > b
 
 const defaultFilter = (cell) => {
 	const age = shared.clock - cell.birth
-	return age > 5
+	return age > 0
 }
 
 // 'Sleeping' means merging with a nearby cell so that we don't have to
