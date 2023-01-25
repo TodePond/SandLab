@@ -71,11 +71,6 @@ ELEMENTS.set(AIR_SPLASH, {
 			return score
 		}
 
-		const filter = (cell) => {
-			const age = shared.clock - cell.birth
-			return age > 5
-		}
-
 		const compareSplit = (a, b = -Infinity) => {
 			return a >= b
 		}
@@ -104,18 +99,18 @@ ELEMENTS.set(AIR_SPLASH, {
 		const tooThin = dimensionErrorScale[1] < 1.0
 		const tooShort = dimensionErrorScale[0] < 1.0
 		if (tooThin && tooShort) {
-			return tryToSleep(cell, world, { judge, compare, filter })
+			return tryToSleep(cell, world, { judge, compare })
 		}
 
 		if (tooThin) {
-			const result = tryToSleep(cell, world, { edges: ["top", "bottom"], judge, compare, filter })
+			const result = tryToSleep(cell, world, { edges: ["top", "bottom"], judge, compare })
 			if (result.length > 0) {
 				return result
 			}
 		}
 
 		if (tooShort) {
-			const result = tryToSleep(cell, world, { edges: ["left", "right"], judge, compare, filter })
+			const result = tryToSleep(cell, world, { edges: ["left", "right"], judge, compare })
 			if (result.length > 0) {
 				return result
 			}
@@ -171,6 +166,33 @@ ELEMENTS.set(GREEN.splash, {
 ELEMENTS.set(BLUE.splash, {
 	name: "Water",
 	key: ["w", "3"],
+	update: (cell, world) => {
+		const edge = "bottom"
+		const below = pickSnips(cell, world, edge, FALL_SPEED)
+
+		if (below.snips.length === 0) {
+			return tryToSleep(cell, world)
+		}
+
+		const water = cell
+
+		// If there isn't solid below, fall
+		if (below.snips.every((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)) {
+			const movedCells = swapSnips(water, below.snips, edge)
+			return world.replace([cell, ...below.contacts], [...below.excesses, ...movedCells])
+		}
+
+		// If there are some gaps below, fall into those bits
+		const gaps = below.snips.filter((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)
+		if (gaps.length > 0) {
+			// Cut myself up into gap-sized pieces
+			const targets = gaps.map((v) => [v.bounds.left, v.bounds.right]).flat()
+			const pieces = chop(water, "y", targets)
+			return world.replace([water], [...pieces])
+		}
+
+		return tryToSleep(cell, world)
+	},
 })
 
 ELEMENTS.set(SILVER.splash, {
@@ -184,11 +206,21 @@ ELEMENTS.set(SILVER.splash, {
 			return tryToSleep(cell, world)
 		}
 
+		const water = cell
+
 		// If there isn't solid below, fall
-		if (below.snips.every((c) => !SOLID.has(c.colour.splash))) {
-			let sand = cell
-			const movedCells = swapSnips(sand, below.snips, edge)
+		if (below.snips.every((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)) {
+			const movedCells = swapSnips(water, below.snips, edge)
 			return world.replace([cell, ...below.contacts], [...below.excesses, ...movedCells])
+		}
+
+		// If there are some gaps below, fall into those bits
+		const gaps = below.snips.filter((c) => !SOLID.has(c.colour.splash) && c.colour.splash !== cell.splash)
+		if (gaps.length > 0) {
+			// Cut myself up into gap-sized pieces
+			const targets = gaps.map((v) => [v.bounds.left, v.bounds.right]).flat()
+			const pieces = chop(water, "y", targets)
+			return world.replace([water], [...pieces])
 		}
 
 		return tryToSleep(cell, world)

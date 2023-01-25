@@ -41,6 +41,8 @@ const chop = (cell, axis, targets) => {
 
 	const direction = AXIS[axis]
 
+	targets = targets.sort((a, b) => a - b)
+
 	const cells = []
 	let currentTarget = cell.bounds[direction.min]
 	for (let i = 0; i <= targets.length; i++) {
@@ -292,7 +294,10 @@ const defaultJudge = (cells) => {
 
 const defaultCompare = (a, b = -Infinity) => a > b
 
-const defaultFilter = (cell) => true
+const defaultFilter = (cell) => {
+	const age = shared.clock - cell.birth
+	return age > 5
+}
 
 // 'Sleeping' means merging with a nearby cell so that we don't have to
 // update or draw this cell every frame
